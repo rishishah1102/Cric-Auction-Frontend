@@ -1,0 +1,916 @@
+/* Main Container */
+.auction-container {
+    width: 100%;
+    min-height: 93vh;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f7fa;
+}
+
+/* Auction Selection Section */
+.auction-container .auction-selection-section {
+    max-width: 1200px;
+    margin: 0 auto 20px auto;
+}
+
+.auction-container .auction-selection-section .auction-dropdown-wrapper {
+    background: white;
+    border-radius: 12px;
+    padding: 15px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auction-container .auction-selection-section .auction-dropdown {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #0d2249;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d2249' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.auction-container .auction-selection-section .auction-dropdown:focus {
+    outline: none;
+    border-color: #0d2249;
+    box-shadow: 0 0 0 3px rgba(13, 34, 73, 0.1);
+}
+
+.auction-container .auction-selection-section .auction-dropdown:hover {
+    border-color: #0d2249;
+    background: white;
+}
+
+/* Auction Details Container */
+.auction-container .auction-details-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Auction Details Card */
+.auction-container .auction-details-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eee;
+}
+
+.auction-container .auction-details-card .auction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.auction-container .auction-details-card .auction-header .auction-title-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    min-width: 300px;
+}
+
+.auction-container .auction-details-card .auction-header .auction-main-avatar {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 40px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.auction-container .auction-details-card .auction-header .auction-title-info h2 {
+    margin: 0 0 10px 0;
+    color: #0d2249;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.auction-container .auction-details-card .auction-header .auction-id-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.auction-container .auction-details-card .auction-header .auction-id-label {
+    font-weight: 500;
+    color: #666;
+    font-size: 14px;
+}
+
+.auction-container .auction-details-card .auction-header .auction-id {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #0d2249;
+    background: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.auction-container .auction-details-card .auction-header .copy-button {
+    background: none;
+    border: none;
+    color: #0d2249;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auction-container .auction-details-card .auction-header .copy-button:hover {
+    background: rgba(13, 34, 73, 0.1);
+}
+
+.auction-container .auction-details-card .auction-header .copy-button svg {
+    font-size: 18px;
+}
+
+.auction-container .auction-details-card .auction-header .edit-auction-button {
+    background: #0d2249;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.auction-container .auction-details-card .auction-header .edit-auction-button:hover {
+    background: #0a1a36;
+    transform: translateY(-2px);
+}
+
+/* Auction Info Grid */
+.auction-container .auction-details-card .auction-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.auction-container .auction-details-card .auction-info-grid .info-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.auction-container .auction-details-card .auction-info-grid .info-item:hover {
+    border-color: #0d2249;
+    box-shadow: 0 2px 4px rgba(13, 34, 73, 0.1);
+}
+
+.auction-container .auction-details-card .auction-info-grid .info-item .info-icon {
+    background: #0d2249;
+    color: white;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.auction-container .auction-details-card .auction-info-grid .info-item .info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.auction-container .auction-details-card .auction-info-grid .info-item .info-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.auction-container .auction-details-card .auction-info-grid .info-item .info-value {
+    font-size: 16px;
+    color: #0d2249;
+    font-weight: 600;
+}
+
+/* Teams Section */
+.auction-container .teams-section {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eee;
+}
+
+.auction-container .teams-section .teams-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.auction-container .teams-section .teams-header h3 {
+    margin: 0;
+    color: #0d2249;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.auction-container .teams-section .teams-header .add-team-button {
+    background: #0d2249;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.auction-container .teams-section .teams-header .add-team-button:hover {
+    background: #0a1a36;
+    transform: translateY(-2px);
+}
+
+/* Teams Grid */
+.auction-container .teams-section .teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.auction-container .teams-section .teams-grid .team-card {
+    background: white;
+    border-radius: 16px;
+    border: 2px solid #f1f3f4;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.auction-container .teams-section .teams-grid .team-card:hover {
+    border-color: #0d2249;
+    box-shadow: 0 4px 12px rgba(13, 34, 73, 0.15);
+    transform: translateY(-2px);
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-card-content {
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-avatar {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-name {
+    margin: 0;
+    color: #0d2249;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-owners {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.auction-container .teams-section .teams-grid .team-card .owners-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.auction-container .teams-section .teams-grid .team-card .owners-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.auction-container .teams-section .teams-grid .team-card .owner-tag {
+    background: #0d2249;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.auction-container .teams-section .teams-grid .team-card .no-owners {
+    color: #999;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-edit-button,
+.auction-container .teams-section .teams-grid .team-card .team-delete-button {
+    background: none;
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-edit-button {
+    color: #0d2249;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-edit-button:hover {
+    background: rgba(13, 34, 73, 0.1);
+    border-color: #0d2249;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-delete-button {
+    color: #dc3545;
+}
+
+.auction-container .teams-section .teams-grid .team-card .team-delete-button:hover {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+}
+
+/* No Teams State */
+.auction-container .teams-section .no-teams-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.auction-container .teams-section .no-teams-state .no-teams-icon {
+    font-size: 64px;
+    color: #ddd;
+}
+
+.auction-container .teams-section .no-teams-state p {
+    font-size: 18px;
+    margin: 0;
+}
+
+.auction-container .teams-section .no-teams-state .create-first-team-button {
+    background: #0d2249;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.auction-container .teams-section .no-teams-state .create-first-team-button:hover {
+    background: #0a1a36;
+    transform: translateY(-2px);
+}
+
+/* Empty State */
+.auction-container .empty-state {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 60px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.auction-container .empty-state .empty-icon {
+    font-size: 80px;
+    color: #ddd;
+}
+
+.auction-container .empty-state h3 {
+    margin: 0;
+    color: #0d2249;
+    font-size: 24px;
+}
+
+.auction-container .empty-state p {
+    margin: 0;
+    color: #666;
+    font-size: 16px;
+}
+
+/* Loading State */
+.auction-container .loading-state {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: #666;
+}
+
+.auction-container .loading-state .hammer-container {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    transform-origin: 80% 80%;
+    animation: hammer-swing 1s ease-in-out infinite;
+}
+
+.auction-container .loading-state .hammer-container .hammer-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    color: #0d2249;
+    transform-origin: 80% 80%;
+}
+
+.auction-container .loading-state .hammer-container .impact {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background: rgba(13, 34, 73, 0.2);
+    border-radius: 50%;
+    opacity: 0;
+    animation: impact 1s ease-in-out infinite;
+}
+
+/* Modal Styles */
+.auction-container .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    backdrop-filter: blur(3px);
+}
+
+.auction-container .modal-overlay .edit-auction-modal,
+.auction-container .modal-overlay .team-modal {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    padding: 30px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.auction-container .modal-overlay .modal-close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.auction-container .modal-overlay .modal-close-button:hover {
+    color: #0d2249;
+    background: rgba(13, 34, 73, 0.1);
+}
+
+.auction-container .modal-overlay h2 {
+    margin: 10px 0 25px 0;
+    color: #0d2249;
+    font-size: 24px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Form Styles */
+.auction-container .modal-overlay .edit-form,
+.auction-container .modal-overlay .team-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.auction-container .modal-overlay .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.auction-container .modal-overlay .form-group label {
+    font-weight: 600;
+    color: #0d2249;
+    font-size: 14px;
+}
+
+.auction-container .modal-overlay .form-group input,
+.auction-container .modal-overlay .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.auction-container .modal-overlay .form-group input:focus,
+.auction-container .modal-overlay .form-group textarea:focus {
+    outline: none;
+    border-color: #0d2249;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(13, 34, 73, 0.1);
+}
+
+.auction-container .modal-overlay .form-group input:hover,
+.auction-container .modal-overlay .form-group textarea:hover {
+    border-color: #0d2249;
+    background: white;
+}
+
+/* Checkbox Group */
+.auction-container .modal-overlay .checkbox-group .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #0d2249;
+}
+
+.auction-container .modal-overlay .checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #0d2249;
+    cursor: pointer;
+}
+
+.auction-container .modal-overlay .checkbox-group .checkbox-text {
+    font-size: 16px;
+}
+
+/* Image Upload Section */
+.auction-container .modal-overlay .image-upload-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.auction-container .modal-overlay .image-upload-placeholder {
+    width: 100%;
+    height: 150px;
+    border: 2px dashed #ddd;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #666;
+}
+
+.auction-container .modal-overlay .image-upload-placeholder:hover {
+    border-color: #0d2249;
+    background: rgba(13, 34, 73, 0.05);
+}
+
+.auction-container .modal-overlay .image-upload-placeholder svg {
+    font-size: 48px;
+    color: #0d2249;
+    margin-bottom: 10px;
+}
+
+.auction-container .modal-overlay .image-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.auction-container .modal-overlay .edit-image-preview {
+    width: 100px !important;
+    height: 100px !important;
+    border-radius: 50px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.auction-container .modal-overlay .change-image-button {
+    background: transparent;
+    border: 1px solid #0d2249;
+    color: #0d2249;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.auction-container .modal-overlay .change-image-button:hover {
+    background: rgba(13, 34, 73, 0.1);
+}
+
+.auction-container .modal-overlay .image-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+}
+
+/* File Upload Section */
+.auction-container .modal-overlay .file-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auction-container .modal-overlay .file-upload-button {
+    background: #f8f9fa;
+    border: 2px solid #e5e7eb;
+    color: #0d2249;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.auction-container .modal-overlay .file-upload-button:hover {
+    border-color: #0d2249;
+    background: white;
+}
+
+/* Modal Actions */
+.auction-container .modal-overlay .modal-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.auction-container .modal-overlay .cancel-button,
+.auction-container .modal-overlay .save-button {
+    flex: 1;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.auction-container .modal-overlay .cancel-button {
+    background: #f8f9fa;
+    color: #666;
+    border: 1px solid #ddd;
+}
+
+.auction-container .modal-overlay .cancel-button:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.auction-container .modal-overlay .save-button {
+    background: #0d2249;
+    color: white;
+    border: none;
+}
+
+.auction-container .modal-overlay .save-button:hover:not(:disabled) {
+    background: #0a1a36;
+}
+
+.auction-container .modal-overlay .save-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Spinner */
+.auction-container .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0d2249;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes hammer-swing {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    30% {
+        transform: rotate(-40deg);
+    }
+
+    60% {
+        transform: rotate(5deg);
+    }
+}
+
+@keyframes impact {
+
+    0%,
+    100% {
+        transform: translateX(-50%) scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: translateX(-50%) scale(1.5);
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .auction-container {
+        padding: 10px;
+    }
+
+    .auction-container .auction-details-card,
+    .auction-container .teams-section {
+        padding: 20px;
+        border-radius: 16px;
+    }
+
+    .auction-container .auction-details-card .auction-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .auction-container .auction-details-card .auction-header .auction-title-section {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .auction-container .auction-details-card .auction-header .auction-title-info h2 {
+        font-size: 22px;
+    }
+
+    .auction-container .auction-details-card .auction-header .auction-id {
+        max-width: 120px;
+    }
+
+    .auction-container .auction-details-card .auction-info-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .auction-container .teams-section .teams-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .auction-container .teams-section .teams-grid .team-card .team-card-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .auction-container .teams-section .teams-grid .team-card .team-actions {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .auction-container .modal-overlay .edit-auction-modal,
+    .auction-container .modal-overlay .team-modal {
+        width: 95%;
+        padding: 20px;
+        max-height: 85vh;
+    }
+
+    .auction-container .modal-overlay .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .auction-container .auction-selection-section .auction-dropdown {
+        max-width: 100%;
+    }
+
+    .auction-container .teams-section .teams-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .auction-container .teams-section .teams-header .add-team-button {
+        align-self: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .auction-container .auction-details-card .auction-header .auction-title-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .auction-container .auction-details-card .auction-header .auction-title-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .auction-container .auction-details-card .auction-header .auction-id-section {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .auction-container .auction-details-card .auction-header .auction-id {
+        max-width: 100px;
+    }
+}

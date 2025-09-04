@@ -1,0 +1,251 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #0d2249;
+  padding: 6px 14px;
+  transition: all 0.5s ease-in-out;
+  z-index: 2;
+}
+
+.sidebar .logo_content .logo {
+  display: flex;
+  height: 50px;
+  width: 100%;
+  color: #fff;
+  align-items: center;
+  pointer-events: none;
+  transition: all 0.5s ease-in-out;
+}
+
+.logo_content .logo .MuiSvgIcon-root {
+  font-size: 28px;
+  margin-right: 5px;
+}
+
+.logo_content .logo .logo_name {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.sidebar #btn {
+  position: absolute;
+  color: #fff;
+  top: 13px;
+  font-size: 20px;
+  height: 30px;
+  width: 30px;
+  text-align: center;
+  line-height: 30px;
+  transform: translateX(-50%);
+  cursor: pointer;
+  transition: all 0.5s ease-in-out;
+}
+
+.sidebar ul {
+  margin-top: 20px;
+}
+
+.sidebar ul li {
+  position: relative;
+  left: -40px;
+  height: 50px;
+  width: 120%;
+  margin: 10px 5px;
+  list-style: none;
+  line-height: 50px;
+}
+
+.sidebar ul li .tooltip {
+  position: absolute;
+  left: 122px;
+  top: 0;
+  transform: translateY(-50%);
+  border-radius: 6px;
+  height: 35px;
+  width: 122px;
+  background: #fff;
+  line-height: 35px;
+  text-align: center;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+}
+
+.sidebar ul li:hover .tooltip {
+  transition: all 0.5s ease-in-out;
+  opacity: 1;
+  top: 50%;
+}
+
+.sidebar ul li a {
+  color: #fff;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: all 0.4s ease-in-out;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.sidebar ul li .openNavLink:hover {
+  color: #11101d;
+  background: #fff;
+}
+
+.sidebar ul li .closedNavLink:hover {
+  background: #fff;
+}
+
+.sidebar ul li .active.openNavLink {
+  color: #11101d;
+  background: #fff;
+}
+
+.sidebar ul li .active.closedNavLink {
+  background: #fff;
+}
+
+.sidebar ul li a .MuiSvgIcon-root {
+  height: 30px;
+  min-width: 50px;
+  border-radius: 12px;
+  line-height: 50px;
+  text-align: center;
+}
+
+.sidebar .profile_content {
+  position: absolute;
+  color: #fff;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+
+.sidebar .profile_content .profile {
+  position: relative;
+  padding: 10px 6px;
+  height: 60px;
+  background: #143676;
+}
+
+.sidebar .profile_content .profile .profile_details {
+  display: flex;
+  align-items: center;
+  transition: all 0.5s ease-in-out;
+  position: relative;
+  bottom: 5px;
+}
+
+.sidebar .profile_content .profile .profile_details .MuiAvatar-root {
+  height: 50px;
+  width: 50px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.sidebar .profile_content .profile .profile_details .name_job {
+  margin-left: 10px;
+}
+
+.sidebar .profile_content .profile .profile_details .name_job .name {
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.sidebar .profile_content .profile .profile_details .name_job .job {
+  font-size: 12px;
+}
+
+.sidebar .profile_content .profile #log_out {
+  position: absolute;
+  bottom: 5px;
+  transform: translateX(-50%);
+  min-width: 50px;
+  line-height: 50px;
+  font-size: 25px;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.home_content {
+  position: absolute;
+  height: 100vh;
+  transition: all 0.5s ease-in-out;
+}
+
+.home_content .text {
+  width: 100%;
+  font-weight: 500;
+  background: #0d2249;
+  color: #fff;
+  z-index: 1;
+}
+
+.home_content .text h4 {
+  padding: 18px;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 600px) {
+  .sidebar {
+    width: 72px !important;
+  }
+
+  .sidebar.open {
+    width: 240px !important; /* Expanded width for mobile */
+  }
+
+  .home_content {
+    width: calc(100% - 72px) !important; /* Home content width when sidebar is collapsed */
+    left: 72px !important; /* Home content position when sidebar is collapsed */
+  }
+
+  .sidebar.open ~ .home_content {
+    width: calc(100% - 72px) !important; /* Home content width when sidebar is expanded */
+    left: 72px !important; /* Home content position when sidebar is expanded */
+  }
+}
+
+@media (max-width: 500px) {
+  .sidebar {
+    width: 100% !important;
+    height: 60px;
+  }
+
+  .sidebar.open {
+    width: 240px !important;
+    height: 100%;
+  }
+
+  .home_content {
+    width: calc(100%) !important;
+    left: 0px !important;
+  }
+
+  .sidebar.open ~ .home_content {
+    width: calc(100%) !important;
+    left: 0px !important;
+  }
+
+  .home_content .text {
+    color: transparent;
+  }
+
+  .sidebar ul {
+    visibility: hidden;
+  }
+
+  .sidebar.open ul {
+    visibility: visible;
+  }
+
+  .sidebar .profile_content {
+    visibility: hidden;
+  }
+
+  .sidebar.open .profile_content {
+    visibility: visible;
+  }
+}
