@@ -13,6 +13,8 @@ import LogoutIcon from "@mui/icons-material/Logout";
 // Components
 import NavList from "./NavList";
 import routes from "../../utils/routes";
+import { profileAPI } from "../../utils/axios";
+import { toast } from "react-toastify";
 
 function Navbar({ onOpen }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -28,10 +30,29 @@ function Navbar({ onOpen }) {
   const { userData } = useContext(auctionContext);
 
   useEffect(() => {
-    if (userData) {
+    if (userData !== (null || undefined)) {
       setProfile(userData);
+    } else {
+      fetchData()
     }
   }, [userData]);
+
+  const fetchData = async () => {
+    try {
+      const res = await profileAPI.get("/profile", {
+        headers: { Authorization: localStorage.getItem("auction") },
+      });
+      if (res.status === 200) {
+        setProfile(res.data.userProfile);
+      }
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        toast.error("Please login again!")
+      } else {
+        toast.error("Please try again later!")
+      }
+    }
+  };
 
   const toggleNav = () => {
     const newState = !isOpen;

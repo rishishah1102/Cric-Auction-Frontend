@@ -7,21 +7,19 @@ const UserState = (props) => {
   const [userAuctions, setUserAuctions] = useState([]);
 
   useEffect(() => {
-    if (localStorage.getItem("auction")) {
-      const fetchData = async () => {
-        try {
-          const res = await profileAPI.get("/profile", {
-            headers: { Authorization: localStorage.getItem("auction") },
-          });
-          if (res.status === 200) {
-            setUserData(res.data.userProfile);
-          }
-        } catch (error) {
-          console.error("failed to fetch user");
+    const fetchData = async () => {
+      try {
+        const res = await profileAPI.get("/profile", {
+          headers: { Authorization: localStorage.getItem("auction") },
+        });
+        if (res.status === 200) {
+          setUserData(res.data.userProfile);
         }
-      };
-      fetchData();
-    }
+      } catch (error) {
+        console.error("failed to fetch user");
+      }
+    };
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -42,12 +40,10 @@ const UserState = (props) => {
     fetchData();
   }, []);
 
-  const refreshAuctions = (auctions) => {
-    setUserAuctions(auctions)
-  } 
-
   return (
-    <AuctionContext.Provider value={{ userData, userAuctions, refrestAuctions: refreshAuctions }}>
+    <AuctionContext.Provider
+      value={{ userData, userAuctions }}
+    >
       {props.children}
     </AuctionContext.Provider>
   );

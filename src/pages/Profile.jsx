@@ -48,14 +48,34 @@ function Profile() {
   useEffect(() => {
     document.title = "Profile";
 
-    if (userData) {  
+    if (userData !== (null || undefined)) {
       setProfileData(userData);
       userData.image_url !== (null || undefined) && setImageUrl(userData?.image_url);
+    } else {
+      fetchData()
     }
 
     document.body.classList.add("scroll-enabled");
     return () => document.body.classList.remove("scroll-enabled");
   }, [userData]);
+
+  const fetchData = async () => {
+    try {
+      const res = await profileAPI.get("/profile", {
+        headers: { Authorization: localStorage.getItem("auction") },
+      });
+      if (res.status === 200) {
+        setProfileData(res.data.userProfile);
+        setImageUrl(res.data.userProfile.image_url)
+      }
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        toast.error("Please login again!")
+      } else {
+        toast.error("Please try again later!")
+      }
+    }
+  };
 
   const handleImageUpload = async (e) => {
     e.preventDefault();
@@ -101,6 +121,7 @@ function Profile() {
       });
       if (res.status === 200) {
         toast.success("Profile updated successfully!");
+        window.location.reload()
       }
     } catch (error) {
       if (error.response.status === 401) {

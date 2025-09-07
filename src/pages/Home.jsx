@@ -22,14 +22,19 @@ function Home() {
   const [filteredAuctions, setFilteredAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const { refreshAuctions } = useContext(auctionContext);
+  const { userAuctions } = useContext(auctionContext);
 
   useEffect(() => {
     document.title = "Home";
     document.body.classList.add("scroll-enabled");
     
-    // Fetch all auctions on initial load
-    fetchAllAuctions();
+    if (userAuctions.length > 0) {
+      setAuctions(userAuctions)
+      setFilteredAuctions(userAuctions)
+      setLoading(false)
+    } else{
+      fetchAllAuctions();
+    }
 
     return () => document.body.classList.remove("scroll-enabled");
   }, []);
@@ -46,11 +51,6 @@ function Home() {
         const allAuctions = res.data.auctions || [];
         setAuctions(allAuctions);
         setFilteredAuctions(allAuctions);
-        
-        // Update context if available
-        if (refreshAuctions) {
-          refreshAuctions(allAuctions);
-        }
       }
     } catch (err) {
       if (err.response?.status === 401) {
@@ -312,8 +312,8 @@ function Home() {
             </div>
           ) : filteredAuctionCards.length > 0 ? (
             <AnimatePresence>
-              {filteredAuctionCards.map((auction) => (
-                <AuctionCard key={auction._id} auction={auction} />
+              {filteredAuctionCards.map((auction, idx) => (
+                <AuctionCard key={idx} auction={auction} />
               ))}
             </AnimatePresence>
           ) : (

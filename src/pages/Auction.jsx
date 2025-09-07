@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import "../style/auction.css";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, time } from "framer-motion";
 import auctionContext from "../context/auctionContext";
 import { auctionAPI } from "../utils/axios";
 import { toast } from "react-toastify";
@@ -11,7 +11,6 @@ import axios from "axios";
 import GavelIcon from "@mui/icons-material/Gavel";
 import BorderColorIcon from "@mui/icons-material/BorderColor";
 import CloseIcon from "@mui/icons-material/Close";
-import CheckIcon from "@mui/icons-material/Check";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import GroupsIcon from "@mui/icons-material/Groups";
@@ -28,10 +27,7 @@ function AuctionPage() {
   const [auctions, setAuctions] = useState([]);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [teams, setTeams] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
   const [isEditor, setIsEditor] = useState(false);
-  const [originalAuction, setOriginalAuction] = useState(null);
-  const [originalTeams, setOriginalTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [teamModalOpen, setTeamModalOpen] = useState(false);
@@ -52,8 +48,12 @@ function AuctionPage() {
     team_name: "",
     team_image: "",
     team_owners: [],
+    user_names: []
   });
   const [teamImageLoading, setTeamImageLoading] = useState(false);
+
+  const [ownerSearch, setOwnerSearch] = useState("");
+  const [showOwnerDropdown, setShowOwnerDropdown] = useState(false);
 
   const location = useLocation();
   const { auctionId } = location.state || {};
@@ -66,6 +66,33 @@ function AuctionPage() {
     };
   }, []);
 
+  const handleAuctionSelect = useCallback(async (auctionId) => {
+    try {
+      setLoading(true)
+      const response = await auctionAPI.post(
+        "/auction/",
+        { auction_id: auctionId },
+        { headers: { Authorization: localStorage.getItem("auction") } }
+      );
+      if (response.status === 200) {
+        let selected = response.data.auction
+        setSelectedAuction(selected);
+        setIsEditor(selected.created_by === userData.email);
+        await fetchTeams(selected.id);
+      }
+    } catch (error) {
+      if (error.response.status === 400 || error.response.status === 404) {
+        toast.error("Invalid Auction Id")
+      } else if (error.response.status === 401) {
+        toast.error("Please login again!")
+      } else {
+        toast.error("Please try again later!")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [userData.email])
+
   const fetchAuctions = useCallback(async () => {
     try {
       setLoading(true);
@@ -74,27 +101,21 @@ function AuctionPage() {
       });
       if (response.status === 200) {
         const respAuctions = response.data.auctions || [];
-
         setAuctions(respAuctions);
-
         if (auctionId) {
-          const selected = respAuctions.find(
-            (auction) => auction.id === auctionId
-          );
-          if (selected) {
-            setSelectedAuction(selected);
-            setOriginalAuction({ ...selected });
-            setIsEditor(selected.created_by === userData.email);
-            await fetchTeams(selected.id);
-          }
+          await handleAuctionSelect(auctionId)
         }
       }
     } catch (error) {
-      toast.error("Failed to load auctions. Please try again.");
+      if (error.response.status === 401) {
+        toast.error("Please login again!")
+      } else {
+        toast.error("Failed to load auctions!")
+      }
     } finally {
       setLoading(false);
     }
-  }, [auctionId, userData?.email]);
+  }, [auctionId, handleAuctionSelect]);
 
   const fetchTeams = async (auctionId) => {
     try {
@@ -106,10 +127,15 @@ function AuctionPage() {
       if (response.status === 200) {
         const fetchedTeams = response.data.teams || [];
         setTeams(fetchedTeams);
-        setOriginalTeams([...fetchedTeams]);
       }
     } catch (error) {
-      console.error("Failed to fetch teams:", error);
+      if (error.response.status === 400 || error.response.status === 404) {
+        toast.error("Invalid Auction Id")
+      } else if (error.response.status === 401) {
+        toast.error("Please login again!")
+      } else {
+        toast.error("Failed to fetch teams!")
+      }
     }
   };
 
@@ -118,16 +144,6 @@ function AuctionPage() {
       fetchAuctions();
     }
   }, [fetchAuctions, userData]);
-
-  const handleAuctionSelect = async (auctionId) => {
-    const selected = auctions.find((auction) => auction.id === auctionId);
-
-    setSelectedAuction(selected);
-    setOriginalAuction({ ...selected });
-    setIsEditor(selected.created_by === userData.email);
-    setIsEditing(false);
-    await fetchTeams(selected.id);
-  };
 
   const copyAuctionId = () => {
     navigator.clipboard.writeText(selectedAuction.id);
@@ -204,17 +220,17 @@ function AuctionPage() {
       }
 
       if (regex.test(editData.auction_date)) {
-        rfcTime = new Date(editData.auction_date).toISOString()
+        rfcTime = new Date(editData.auction_date).toISOString();
       } else {
-        rfcTime = editData.auction_date
+        rfcTime = editData.auction_date;
       }
-      
+
       const updateData = {
-        "id": selectedAuction.id,
-        "auction_name": editData.auction_name,
-        "auction_image": imageUrl,
-        "is_ipl_auction": editData.is_ipl_auction,
-        "auction_date": rfcTime,
+        id: selectedAuction.id,
+        auction_name: editData.auction_name,
+        auction_image: imageUrl,
+        is_ipl_auction: editData.is_ipl_auction,
+        auction_date: rfcTime,
       };
 
       // Handle players file upload if provided
@@ -231,7 +247,7 @@ function AuctionPage() {
         //   },
         // });
       }
-      
+
       const response = await auctionAPI.patch("/auction", updateData, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
@@ -240,7 +256,7 @@ function AuctionPage() {
         toast.success("Auction updated successfully!");
         const updatedAuction = { ...selectedAuction, ...updateData };
         setSelectedAuction(updatedAuction);
-        setOriginalAuction({ ...updatedAuction });
+        // setOriginalAuction({ ...updatedAuction });
         setAuctions((prev) =>
           prev.map((a) => (a.id === selectedAuction.id ? updatedAuction : a))
         );
@@ -272,6 +288,8 @@ function AuctionPage() {
         team_owners: [],
       });
     }
+    setOwnerSearch("");
+    setShowOwnerDropdown(false);
     setTeamModalOpen(true);
   };
 
@@ -309,9 +327,6 @@ function AuctionPage() {
           await fetchTeams(selectedAuction.id);
         }
       } else {
-        // Create new team
-        console.log(teamPayload);
-        
         const response = await auctionAPI.post("/auction/team", teamPayload, {
           headers: { Authorization: localStorage.getItem("auction") },
         });
@@ -352,6 +367,35 @@ function AuctionPage() {
       }
     }
   };
+
+  const addOwnerToTeam = (email) => {
+    if (!teamData.team_owners.includes(email)) {
+      setTeamData((prev) => ({
+        ...prev,
+        team_owners: [...prev.team_owners, email],
+      }));
+    }
+    setOwnerSearch("");
+    // setShowOwnerDropdown(false);
+  };
+
+  const removeOwnerFromTeam = (email) => {
+    setTeamData((prev) => ({
+      ...prev,
+      team_owners: prev.team_owners.filter((owner) => owner !== email),
+    }));
+  };
+  
+  let filteredUsers;
+  if (selectedAuction !== undefined || selectedAuction !== null)
+  filteredUsers = selectedAuction?.user_names
+    .filter(
+      (user) =>
+        user.email.toLowerCase().includes(ownerSearch.toLowerCase()) ||
+        (user.name &&
+          user.name.toLowerCase().includes(ownerSearch.toLowerCase()))
+    )
+    .filter((user) => !teamData.team_owners.includes(user.email));
 
   const formatDate = (dateString) => {
     if (!dateString) return "Not set";
@@ -555,11 +599,14 @@ function AuctionPage() {
                             <div className="owners-list">
                               {team.team_owners &&
                               team.team_owners.length > 0 ? (
-                                team.team_owners.map((owner, idx) => (
-                                  <span key={idx} className="owner-tag">
-                                    {owner}
-                                  </span>
-                                ))
+                                team.team_owners.map((owner, idx) => {
+                                  const person = selectedAuction.user_names.find((user) => user.email === owner)
+                                  return (
+                                    <span key={idx} className="owner-tag">
+                                      {person.name}
+                                    </span>
+                                  )
+                                })
                               ) : (
                                 <span className="no-owners">
                                   No owners assigned
@@ -863,19 +910,77 @@ function AuctionPage() {
                 </div>
 
                 <div className="form-group">
-                  <label>Team Owners (comma separated emails)</label>
-                  <input
-                    type="text"
-                    value={teamData.team_owners.join(", ")}
-                    onChange={(e) => {
-                      const owners = e.target.value
-                        .split(",")
-                        .map((email) => email.trim())
-                        .filter((email) => email);
-                      setTeamData((prev) => ({ ...prev, team_owners: owners }));
-                    }}
-                    placeholder="Enter owner emails separated by commas"
-                  />
+                  <label>Team Owners</label>
+
+                  {/* Selected owners display */}
+                  {teamData.team_owners.length > 0 && (
+                    <div className="selected-owners-container">
+                      {teamData.team_owners.map((owner, index) => {
+                        const person = selectedAuction.user_names.find((user) => user.email === owner)
+                        return (
+                          <div key={index} className="selected-owner-tag">
+                            <span>{person.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeOwnerFromTeam(owner)}
+                              className="remove-owner-button"
+                            >
+                              <CloseIcon />
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Search input */}
+                  <div className="owner-search-container">
+                    <input
+                      type="text"
+                      value={ownerSearch}
+                      onChange={(e) => {
+                        setOwnerSearch(e.target.value);
+                      }}
+                      onFocus={() => setShowOwnerDropdown(true)}
+                      onBlur={() => {
+                        setTimeout(() => {
+                          setShowOwnerDropdown(false)
+                        }, 300)
+                      }}
+                      placeholder="Search and add owners by email or name"
+                      className="owner-search-input"
+                    />
+
+                    {/* Dropdown */}
+                    {showOwnerDropdown && (
+                      <div className="owner-dropdown">
+                        {filteredUsers.length > 0 ? (
+                          filteredUsers.map((user, index) => (
+                            <div
+                              key={index}
+                              className="owner-option"
+                              onClick={() => addOwnerToTeam(user.email)}
+                            >
+                              <div className="owner-option-content">
+                                <span className="owner-email">
+                                  {user.email}
+                                </span>
+                                {user.name && (
+                                  <span className="owner-name">
+                                    {user.name}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="no-users-found">
+                            No users found matching "{ownerSearch}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="modal-actions">
