@@ -17,4 +17,8 @@ const auctionAPI = axios.create({
   baseURL: "http://127.0.0.1:7003/api/v1",
 });
 
-export { instance, authAPI, profileAPI, auctionAPI };
+const playerAPI = axios.create({
+  baseURL: "http://127.0.0.1:7004/api/v1",
+});
+
+export { instance, authAPI, profileAPI, auctionAPI, playerAPI };

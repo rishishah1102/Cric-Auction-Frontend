@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import "../style/auction.css";
-import { motion, AnimatePresence, time } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import auctionContext from "../context/auctionContext";
 import { auctionAPI } from "../utils/axios";
 import { toast } from "react-toastify";
@@ -76,6 +76,8 @@ function AuctionPage() {
       );
       if (response.status === 200) {
         let selected = response.data.auction
+        console.log(selected);
+        
         setSelectedAuction(selected);
         setIsEditor(selected.created_by === userData.email);
         await fetchTeams(selected.id);
@@ -107,7 +109,7 @@ function AuctionPage() {
         }
       }
     } catch (error) {
-      if (error.response.status === 401) {
+      if (error.response?.status === 401) {
         toast.error("Please login again!")
       } else {
         toast.error("Failed to load auctions!")
