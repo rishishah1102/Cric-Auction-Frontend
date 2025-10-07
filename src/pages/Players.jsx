@@ -436,6 +436,12 @@ function Players() {
                             {player.role}
                           </span>
                         </div>
+                        <div className="info-row">
+                          <span className="info-label">Current Team:</span>
+                          <span className="info-value">
+                            {(player.hammer === "sold") ? player.current_team : "N/A"}
+                          </span>
+                        </div>
                         {selectedAuction.is_ipl_auction && (
                           <>
                             <div className="info-row">
