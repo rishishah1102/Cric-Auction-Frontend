@@ -37,7 +37,7 @@ function Home() {
     }
 
     return () => document.body.classList.remove("scroll-enabled");
-  }, []);
+  }, [userAuctions]);
 
   // Fetch all auctions
   const fetchAllAuctions = async () => {
@@ -155,8 +155,6 @@ function Home() {
   };
 
   const handleCreateAuction = async (auctionData) => {
-    console.log(auctionData.isIPLAuction);
-    
     try {
       let auctionObj = {
         "auction_name": auctionData.auctionName,

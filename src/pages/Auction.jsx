@@ -76,8 +76,6 @@ function AuctionPage() {
       );
       if (response.status === 200) {
         let selected = response.data.auction
-        console.log(selected);
-        
         setSelectedAuction(selected);
         setIsEditor(selected.created_by === userData.email);
         await fetchTeams(selected.id);
@@ -266,8 +264,6 @@ function AuctionPage() {
         setPlayersFile(null);
       }
     } catch (error) {
-      console.log(error);
-
       toast.error("Failed to update auction!");
     } finally {
       setLoading(false);

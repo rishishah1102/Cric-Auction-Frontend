@@ -13,7 +13,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SportsIcon from "@mui/icons-material/Sports";
 import SportsCricketIcon from "@mui/icons-material/SportsCricket";
-import ShieldIcon from "@mui/icons-material/Shield";
 import FlightIcon from "@mui/icons-material/Flight";
 import TuneIcon from "@mui/icons-material/Tune";
 import { GiCricketBat } from "react-icons/gi";
@@ -56,7 +55,6 @@ function Players() {
       });
       if (response.status === 200) {
         setAuctions(response.data.auctions || []);
-        console.log(response.data.auctions);
       }
     } catch (error) {
       toast.error("Failed to load auctions!");
@@ -174,7 +172,7 @@ function Players() {
   const handleEditSubmit = async () => {
     try {
       setLoading(true);
-      const response = await playerAPI("/players/update", editData, {
+      const response = await playerAPI.patch("/players/update", editData, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
 
@@ -429,13 +427,13 @@ function Players() {
                         <div className="info-row">
                           <span className="info-label">Base Price:</span>
                           <span className="info-value">
-                            ₹{player.base_rice?.toLocaleString() || 0} Cr
+                            ₹{player.base_price?.toLocaleString() || 0} Cr
                           </span>
                         </div>
                         <div className="info-row">
-                          <span className="info-label">Previous Team:</span>
+                          <span className="info-label">Role:</span>
                           <span className="info-value">
-                            {player.prev_team || "N/A"}
+                            {player.role}
                           </span>
                         </div>
                         {selectedAuction.is_ipl_auction && (
@@ -554,7 +552,7 @@ function Players() {
                   <div className="detail-row">
                     <span className="detail-label">Base Price:</span>
                     <span className="detail-value">
-                      ₹{selectedPlayer.base_rice?.toLocaleString() || 0} Cr
+                      ₹{selectedPlayer.base_price?.toLocaleString() || 0} Cr
                     </span>
                   </div>
                   <div className="detail-row">
@@ -625,19 +623,6 @@ function Players() {
               <div className="edit-form">
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Player Number</label>
-                    <input
-                      type="number"
-                      value={editData.player_number}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          player_number: parseInt(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="form-group">
                     <label>Player Name</label>
                     <input
                       type="text"
@@ -650,9 +635,6 @@ function Players() {
                       }
                     />
                   </div>
-                </div>
-
-                <div className="form-row">
                   <div className="form-group">
                     <label>Role</label>
                     <select
@@ -667,15 +649,31 @@ function Players() {
                       <option value="Wicket-Keeper">Wicket-Keeper</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="form-row">
                   <div className="form-group">
                     <label>Base Price</label>
                     <input
                       type="number"
-                      value={editData.base_rice}
+                      value={editData.base_price}
                       onChange={(e) =>
                         setEditData({
                           ...editData,
-                          base_rice: parseFloat(e.target.value),
+                          base_price: parseFloat(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Selling Price</label>
+                    <input
+                      type="number"
+                      value={editData.selling_price}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          selling_price: parseFloat(e.target.value),
                         })
                       }
                     />
@@ -715,6 +713,39 @@ function Players() {
                       value={editData.prev_team || ""}
                       onChange={(e) =>
                         setEditData({ ...editData, prev_team: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Current Team</label>
+                    <select
+                      value={editData.current_team}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          current_team: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Select</option>
+                      <option value="upcoming">Upcoming</option>
+                      <option value="sold">Sold</option>
+                      <option value="unsold">Unsold</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Previous Fantasy Points</label>
+                    <input
+                      type="number"
+                      value={editData.prev_fantasy_points}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          prev_fantasy_points: parseInt(e.target.value),
+                        })
                       }
                     />
                   </div>

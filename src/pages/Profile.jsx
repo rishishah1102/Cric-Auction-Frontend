@@ -114,7 +114,6 @@ function Profile() {
         ...profileData,
         image_url: imageUrl,
       };
-      console.log(reqData);
       
       const res = await profileAPI.post("/profile", reqData, {
         headers: { Authorization: localStorage.getItem("auction") },
