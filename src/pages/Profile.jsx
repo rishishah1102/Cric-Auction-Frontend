@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 // axios
 import axios from "axios";
-import { profileAPI } from "../utils/axios";
+import { instance } from "../utils/axios";
 
 // toast
 import { toast } from "react-toastify";
@@ -61,7 +61,7 @@ function Profile() {
 
   const fetchData = async () => {
     try {
-      const res = await profileAPI.get("/profile", {
+      const res = await instance.get("/profile/get", {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       if (res.status === 200) {
@@ -115,7 +115,7 @@ function Profile() {
         image_url: imageUrl,
       };
       
-      const res = await profileAPI.post("/profile", reqData, {
+      const res = await instance.post("/profile/save", reqData, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       if (res.status === 200) {

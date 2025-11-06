@@ -11,7 +11,7 @@ import Knob from "../components/auth/Knob";
 import ParaFooter from "../components/auth/ParaFooter";
 
 // Axios
-import { authAPI } from "../utils/axios";
+import { instance } from "../utils/axios";
 
 // Toast
 import { toast } from "react-toastify";
@@ -69,8 +69,8 @@ const Register = () => {
           email: formData.email,
           mobile: formData.mobile,
         };
-        const response = await authAPI.post(
-          "/register",
+        const response = await instance.post(
+          "/auth/register",
           requestData
         );
         if (response.status === 201) {
@@ -114,7 +114,7 @@ const Register = () => {
       e.preventDefault();
       let enteredOTp = Number(otp.join(""));
 
-      let res = await authAPI.post("/rotp", {
+      let res = await instance.post("/auth/rotp", {
         email: formData.email,
         mobile: formData.mobile,
         otp: enteredOTp,

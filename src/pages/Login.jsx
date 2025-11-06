@@ -11,7 +11,7 @@ import Knob from "../components/auth/Knob";
 import ParaFooter from "../components/auth/ParaFooter";
 
 // Axios
-import { authAPI } from "../utils/axios";
+import { instance } from "../utils/axios";
 
 // Toast
 import { toast } from "react-toastify";
@@ -60,14 +60,16 @@ const Login = () => {
         const requestData = {
           email: formData.email,
         };
-        const response = await authAPI.post("/login", requestData);
+        const response = await instance.post("/auth/login", requestData);
         if (response.status === 200) {
           toast.success("OTP has been sent to your E-Mail");
           setShowOtpField(true);
         } 
       }
     } catch (err) {
-      if (err.response.status === 404) {
+      console.log(err);
+      
+      if (err?.response?.status === 404) {
         toast.error("User not found! Please register first");
       } else {
         toast.error("Internal Server Error!");
@@ -95,7 +97,7 @@ const Login = () => {
         email: formData.email,
         otp: enteredOTp,
       };
-      let res = await authAPI.post("/lotp", requestData);
+      let res = await instance.post("/auth/lotp", requestData);
       if (res.status === 200) {
         toast.success("OTP Verified Successfully!");
         setOtp(new Array(6).fill(""));

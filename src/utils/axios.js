@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://127.0.0.1:5000",
+  baseURL: "http://0.0.0.0:5000/api/v1",
   // baseURL: "https://cricket-auction-backend.vercel.app/",
 });
 
@@ -10,7 +10,7 @@ const authAPI = axios.create({
 });
 
 const profileAPI = axios.create({
-  baseURL: "http://127.0.0.1:7002/api/v1",
+  baseURL: "http://127.0.0.1:7002/api/v1/profile",
 });
 
 const auctionAPI = axios.create({
