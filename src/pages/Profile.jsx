@@ -48,7 +48,7 @@ function Profile() {
   useEffect(() => {
     document.title = "Profile";
 
-    if (userData !== (null || undefined)) {
+    if (userData !== (null || undefined) && Object.keys(userData).length !== 0) {
       setProfileData(userData);
       userData.image_url !== (null || undefined) && setImageUrl(userData?.image_url);
     } else {
@@ -65,8 +65,8 @@ function Profile() {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       if (res.status === 200) {
-        setProfileData(res.data.userProfile);
-        setImageUrl(res.data.userProfile.image_url)
+        setProfileData(res.data.profile);
+        setImageUrl(res.data.profile?.image_url);
       }
     } catch (error) {
       if (error?.response?.status === 401) {
@@ -174,7 +174,7 @@ function Profile() {
               title="First Name"
               type="text"
               placeholder="eg: John"
-              value={profileData.first_name}
+              value={profileData?.first_name}
               onChange={handleChange}
             />
             <FormInput
@@ -182,7 +182,7 @@ function Profile() {
               title="Last Name"
               type="text"
               placeholder="eg: Doe"
-              value={profileData.last_name}
+              value={profileData?.last_name}
               onChange={handleChange}
             />
           </div>
@@ -193,7 +193,7 @@ function Profile() {
               title="Role"
               type="select"
               options={roles}
-              value={profileData.role}
+              value={profileData?.role}
               onChange={handleChange}
             />
             <FormInput
@@ -201,7 +201,7 @@ function Profile() {
               title="Batting Hand"
               type="select"
               options={battingHand}
-              value={profileData.batting_hand}
+              value={profileData?.batting_hand}
               onChange={handleChange}
             />
           </div>
@@ -212,7 +212,7 @@ function Profile() {
               title="Batting Order"
               type="select"
               options={battingOrder}
-              value={profileData.batting_order}
+              value={profileData?.batting_order}
               onChange={handleChange}
             />
             <FormInput
@@ -220,7 +220,7 @@ function Profile() {
               title="Batting Style"
               type="select"
               options={battingStyle}
-              value={profileData.batting_style}
+              value={profileData?.batting_style}
               onChange={handleChange}
             />
           </div>
@@ -231,7 +231,7 @@ function Profile() {
               title="Bowling Arm"
               type="select"
               options={arm}
-              value={profileData.bowling_arm}
+              value={profileData?.bowling_arm}
               onChange={handleChange}
             />
             <FormInput
@@ -239,7 +239,7 @@ function Profile() {
               title="Bowling Type"
               type="select"
               options={pace}
-              value={profileData.bowling_type}
+              value={profileData?.bowling_type}
               onChange={handleChange}
             />
           </div>

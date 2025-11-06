@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AuctionContext from "./auctionContext";
-import { auctionAPI, profileAPI } from "../utils/axios";
+import { auctionAPI, instance } from "../utils/axios";
 
 const UserState = (props) => {
   const [userData, setUserData] = useState({});
@@ -9,11 +9,11 @@ const UserState = (props) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await profileAPI.get("/profile", {
+        const res = await instance.get("/profile/get", {
           headers: { Authorization: localStorage.getItem("auction") },
         });
         if (res.status === 200) {
-          setUserData(res.data.userProfile);
+          setUserData(res.data.profile);
         }
       } catch (error) {
         console.error("failed to fetch user");

@@ -20,7 +20,7 @@ import "react-toastify/dist/ReactToastify.css";
 const Register = () => {
   const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(true);
-  const [formData, setFormData] = useState({ email: "", mobile: "" });
+  const [formData, setFormData] = useState({ email: "", mobile: "", first_name: "", last_name: "" });
   const [otp, setOtp] = useState(new Array(6).fill(""));
   const [showOtpField, setShowOtpField] = useState(false);
 
@@ -46,6 +46,8 @@ const Register = () => {
     e.preventDefault();
     let emailValidation;
     let mobileValidation;
+    let firstNameValidation;
+    let lastNameValidation;
 
     const emailSchema = yup
       .string()
@@ -55,6 +57,12 @@ const Register = () => {
       .string()
       .matches(/^\d{10}$/, "Mobile number must be 10 digits")
       .required("Mobile number is required");
+    const firstNameSchema = yup
+      .string()
+      .required("First name is required");
+    const lastNameSchema = yup
+      .string()
+      .required("Last name is required");
 
     try {
       emailValidation = await emailSchema.validate(formData.email, {
@@ -63,11 +71,26 @@ const Register = () => {
       mobileValidation = await mobileSchema.validate(formData.mobile, {
         abortEarly: false,
       });
+      firstNameValidation = await firstNameSchema.validate(formData.first_name, {
+        abortEarly: false,
+      });
+      lastNameValidation = await lastNameSchema.validate(formData.last_name, {
+        abortEarly: false,
+      });
 
-      if (emailValidation && mobileValidation) {
+      console.log("emailValidation:", emailValidation);
+      console.log("mobileValidation:", mobileValidation);
+      console.log("firstNameValidation:", firstNameValidation);
+      console.log("lastNameValidation:", lastNameValidation);
+
+      if (emailValidation && mobileValidation && firstNameValidation && lastNameValidation) {
+        console.log("validation success");
+        
         const requestData = {
           email: formData.email,
           mobile: formData.mobile,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
         };
         const response = await instance.post(
           "/auth/register",
@@ -117,6 +140,8 @@ const Register = () => {
       let res = await instance.post("/auth/rotp", {
         email: formData.email,
         mobile: formData.mobile,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         otp: enteredOTp,
       });
       if (res.status === 201) {
@@ -158,6 +183,26 @@ const Register = () => {
                 formData={formData}
                 handleChange={handleChange}
                 nameAttribute="mobile"
+                disabled={showOtpField}
+              />
+              <Input
+                animate={-50}
+                fieldName="First Name"
+                fieldType="text"
+                placeholder="Enter First Name"
+                formData={formData}
+                handleChange={handleChange}
+                nameAttribute="first_name"
+                disabled={showOtpField}
+              />
+              <Input
+                animate={-50}
+                fieldName="Last Name"
+                fieldType="text"
+                placeholder="Enter Last Name"
+                formData={formData}
+                handleChange={handleChange}
+                nameAttribute="last_name"
                 disabled={showOtpField}
               />
               <Input

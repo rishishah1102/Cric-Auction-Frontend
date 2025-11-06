@@ -13,7 +13,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 // Components
 import NavList from "./NavList";
 import routes from "../../utils/routes";
-import { profileAPI } from "../../utils/axios";
+import { instance } from "../../utils/axios";
 import { toast } from "react-toastify";
 
 function Navbar({ onOpen }) {
@@ -30,7 +30,7 @@ function Navbar({ onOpen }) {
   const { userData } = useContext(auctionContext);
 
   useEffect(() => {
-    if (userData !== (null || undefined)) {
+    if (userData !== (null || undefined) && Object.keys(userData).length !== 0) {
       setProfile(userData);
     } else {
       fetchData()
@@ -39,11 +39,11 @@ function Navbar({ onOpen }) {
 
   const fetchData = async () => {
     try {
-      const res = await profileAPI.get("/profile", {
+      const res = await instance.get("/profile/get", {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       if (res.status === 200) {
-        setProfile(res.data.userProfile);
+        setProfile(res.data.profile);
       }
     } catch (error) {
       if (error?.response?.status === 401) {
