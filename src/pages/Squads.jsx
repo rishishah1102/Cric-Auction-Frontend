@@ -49,7 +49,11 @@ function Squads() {
         setAuctions(response.data.auctions || []);
       }
     } catch (error) {
-      toast.error("Failed to load auctions!");
+      if (error.response?.status === 401) {
+        toast.error("Please login again!");
+      } else {
+        toast.error("Failed to load auctions!");
+      }
     } finally {
       setLoading(false);
     }
@@ -75,15 +79,29 @@ function Squads() {
         });
       }
     } catch (error) {
-      toast.error("Failed to fetch teams!");
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        toast.error("Invalid Auction Id");
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again!");
+      } else {
+        toast.error("Failed to fetch teams!");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const fetchSquad = async (playerIds) => {
-    console.log(playerIds);
-    
+    if (!playerIds || playerIds.length === 0) {
+      setSquadPlayers({
+        batters: [],
+        bowlers: [],
+        all_rounders: [],
+        wicket_keepers: [],
+      });
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await instance.post(
@@ -91,57 +109,84 @@ function Squads() {
         { player_id: playerIds },
         { headers: { Authorization: localStorage.getItem("auction") } }
       );
+
       if (response.status === 200) {
-        setSquadPlayers(response.data.squad || {
-          batters: [],
-          bowlers: [],
-          all_rounders: [],
-          wicket_keepers: [],
-        });
+        setSquadPlayers(
+          response.data.squad || {
+            batters: [],
+            bowlers: [],
+            all_rounders: [],
+            wicket_keepers: [],
+          }
+        );
       }
     } catch (error) {
-      toast.error("Failed to fetch squad!");
+      if (error.response?.status === 401) {
+        toast.error("Please login again!");
+      } else {
+        toast.error("Failed to fetch squad!");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAuctionSelect = useCallback(
-    async (auctionId) => {
-      try {
-        setLoading(true);
-        const response = await instance.post(
-          "/auction/get",
-          { auction_id: auctionId },
-          { headers: { Authorization: localStorage.getItem("auction") } }
-        );
-        if (response.status === 200) {
-          let selected = response.data.auction;
-          setSelectedAuction(selected);
-          await fetchTeams(selected.id);
-        }
-      } catch (error) {
-        if (error.response?.status === 400 || error.response?.status === 404) {
-          toast.error("Invalid Auction Id");
-        } else if (error.response?.status === 401) {
-          toast.error("Please login again!");
-        } else {
-          toast.error("Please try again later!");
-        }
-      } finally {
-        setLoading(false);
+  const handleAuctionSelect = useCallback(async (auctionId) => {
+    if (!auctionId) {
+      setSelectedAuction(null);
+      setTeams([]);
+      setSelectedTeam(null);
+      setSquadPlayers({
+        batters: [],
+        bowlers: [],
+        all_rounders: [],
+        wicket_keepers: [],
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await instance.post(
+        "/auction/get",
+        { auction_id: auctionId },
+        { headers: { Authorization: localStorage.getItem("auction") } }
+      );
+      if (response.status === 200) {
+        let selected = response.data.auction;
+        setSelectedAuction(selected);
+        await fetchTeams(selected.id);
       }
-    },
-    []
-  );
+    } catch (error) {
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        toast.error("Invalid Auction Id");
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again!");
+      } else {
+        toast.error("Please try again later!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleTeamSelect = useCallback(
     async (teamId) => {
+      if (!teamId) {
+        setSelectedTeam(null);
+        setSquadPlayers({
+          batters: [],
+          bowlers: [],
+          all_rounders: [],
+          wicket_keepers: [],
+        });
+        return;
+      }
+
       const team = teams.find((t) => t.id === teamId);
       if (team) {
         setSelectedTeam(team);
-        console.log(team);
-        
+
         if (team.squad && team.squad.length > 0) {
           await fetchSquad(team.squad);
         } else {
@@ -163,8 +208,31 @@ function Squads() {
     }
   }, [fetchAuctions, userData]);
 
+  // Calculate total selling price
+  const calculateTotalSellingPrice = useCallback(() => {
+    let total = 0;
+
+    // Safely calculate total from all player categories
+    const allPlayers = [
+      ...(squadPlayers.batters || []),
+      ...(squadPlayers.bowlers || []),
+      ...(squadPlayers.all_rounders || []),
+      ...(squadPlayers.wicket_keepers || []),
+    ];
+
+    allPlayers.forEach((player) => {
+      if (player && typeof player.selling_price === "number") {
+        total += player.selling_price;
+      }
+    });
+
+    return total;
+  }, [squadPlayers]);
+
   const getRoleIcon = (role) => {
-    switch (role?.toLowerCase()) {
+    if (!role) return <SportsIcon />;
+
+    switch (role.toLowerCase()) {
       case "batter":
       case "batsman":
         return <GiCricketBat />;
@@ -180,68 +248,74 @@ function Squads() {
   };
 
   const handlePlayerClick = (player) => {
-    setSelectedPlayer(player);
+    if (player && player.player_name) {
+      setSelectedPlayer(player);
+    }
   };
 
-  const renderPlayerCard = (player, index) => (
-    <motion.div
-      key={player._id}
-      className="squad-player-card"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ delay: index * 0.05 }}
-      onClick={() => handlePlayerClick(player)}
-    >
-      <div className="squad-player-header">
-        <div className="squad-player-name-section">
-          <h4 className="squad-player-name">{player.player_name}</h4>
-          <div className="squad-role-icon">{getRoleIcon(player.role)}</div>
-          {selectedAuction?.is_ipl_auction &&
-            player.country &&
-            player.country !== "India" && (
-              <FlightIcon className="squad-overseas-icon" />
-            )}
-        </div>
-      </div>
+  const renderPlayerCard = (player, index) => {
+    if (!player || !player.player_name) return null;
 
-      <div className="squad-player-info">
-        <div className="squad-info-row">
-          <span className="squad-info-label">Base Price:</span>
-          <span className="squad-info-value">
-            ₹{player.base_price?.toLocaleString() || 0} Cr
-          </span>
+    return (
+      <motion.div
+        key={player._id || player.id || index}
+        className="squad-player-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ delay: index * 0.05 }}
+        onClick={() => handlePlayerClick(player)}
+      >
+        <div className="squad-player-header">
+          <div className="squad-player-name-section">
+            <h4 className="squad-player-name">{player.player_name}</h4>
+            <div className="squad-role-icon">{getRoleIcon(player.role)}</div>
+            {selectedAuction?.is_ipl_auction &&
+              player.country &&
+              player.country !== "India" && (
+                <FlightIcon className="squad-overseas-icon" />
+              )}
+          </div>
         </div>
-        <div className="squad-info-row">
-          <span className="squad-info-label">Selling Price:</span>
-          <span className="squad-info-value">
-            {player.selling_price
-              ? `₹${player.selling_price.toLocaleString()} Cr`
-              : "N/A"}
-          </span>
+
+        <div className="squad-player-info">
+          <div className="squad-info-row">
+            <span className="squad-info-label">Base Price:</span>
+            <span className="squad-info-value">
+              ₹{(player.base_price || 0).toLocaleString()} Cr
+            </span>
+          </div>
+          <div className="squad-info-row">
+            <span className="squad-info-label">Selling Price:</span>
+            <span className="squad-info-value">
+              {player.selling_price
+                ? `₹${player.selling_price.toLocaleString()} Cr`
+                : "N/A"}
+            </span>
+          </div>
+          {selectedAuction?.is_ipl_auction && (
+            <>
+              <div className="squad-info-row">
+                <span className="squad-info-label">Country:</span>
+                <span className="squad-info-value">
+                  {player.country || "N/A"}
+                </span>
+              </div>
+              <div className="squad-info-row">
+                <span className="squad-info-label">IPL Team:</span>
+                <span className="squad-info-value">
+                  {player.ipl_team || "N/A"}
+                </span>
+              </div>
+            </>
+          )}
         </div>
-        {selectedAuction?.is_ipl_auction && (
-          <>
-            <div className="squad-info-row">
-              <span className="squad-info-label">Country:</span>
-              <span className="squad-info-value">
-                {player.country || "N/A"}
-              </span>
-            </div>
-            <div className="squad-info-row">
-              <span className="squad-info-label">IPL Team:</span>
-              <span className="squad-info-value">
-                {player.ipl_team || "N/A"}
-              </span>
-            </div>
-          </>
-        )}
-      </div>
-    </motion.div>
-  );
+      </motion.div>
+    );
+  };
 
   const renderSquadSection = (title, players, icon) => {
-    if (players.length === 0) return null;
+    if (!players || players.length === 0) return null;
 
     return (
       <div className="squad-section">
@@ -279,10 +353,13 @@ function Squads() {
   };
 
   const totalPlayers =
-    squadPlayers.batters.length +
-    squadPlayers.bowlers.length +
-    squadPlayers.all_rounders.length +
-    squadPlayers.wicket_keepers.length;
+    (squadPlayers.batters?.length || 0) +
+    (squadPlayers.bowlers?.length || 0) +
+    (squadPlayers.all_rounders?.length || 0) +
+    (squadPlayers.wicket_keepers?.length || 0);
+
+  const totalSellingPrice = calculateTotalSellingPrice();
+  const remainingPurse = 100.0 - totalSellingPrice;
 
   return (
     <motion.div
@@ -299,6 +376,7 @@ function Squads() {
             value={selectedAuction?.id || ""}
             onChange={(e) => handleAuctionSelect(e.target.value)}
             className="squad-dropdown"
+            disabled={loading}
           >
             <option value="">Select an Auction</option>
             {auctions.map((auction) => (
@@ -313,6 +391,7 @@ function Squads() {
               value={selectedTeam?.id || ""}
               onChange={(e) => handleTeamSelect(e.target.value)}
               className="squad-dropdown"
+              disabled={loading}
             >
               <option value="">Select a Team</option>
               {teams.map((team) => (
@@ -353,9 +432,19 @@ function Squads() {
           >
             <div className="squad-team-info">
               <h2 className="squad-team-name">{selectedTeam.team_name}</h2>
-              <p className="squad-team-count">
-                Total Players: <strong>{totalPlayers}</strong>
-              </p>
+              <div className="squad-stats">
+                <p className="squad-team-count">
+                  Total Players: <strong>{totalPlayers}</strong>
+                </p>
+                <p className="squad-team-count">
+                  Total Spent:{" "}
+                  <strong>₹{totalSellingPrice.toFixed(2)} Cr</strong>
+                </p>
+                <p className="squad-team-count">
+                  Remaining Purse:{" "}
+                  <strong>₹{remainingPurse.toFixed(2)} Cr</strong>
+                </p>
+              </div>
             </div>
           </motion.div>
 
@@ -435,7 +524,7 @@ function Squads() {
                   <div className="squad-detail-row">
                     <span className="squad-detail-label">Player Number:</span>
                     <span className="squad-detail-value">
-                      {selectedPlayer.player_number}
+                      {selectedPlayer.player_number || "N/A"}
                     </span>
                   </div>
                   <div className="squad-detail-row">
@@ -447,7 +536,7 @@ function Squads() {
                   <div className="squad-detail-row">
                     <span className="squad-detail-label">Role:</span>
                     <span className="squad-detail-value">
-                      {selectedPlayer.role}
+                      {selectedPlayer.role || "N/A"}
                     </span>
                   </div>
                   {selectedAuction?.is_ipl_auction && (
@@ -489,7 +578,7 @@ function Squads() {
                   <div className="squad-detail-row">
                     <span className="squad-detail-label">Base Price:</span>
                     <span className="squad-detail-value">
-                      ₹{selectedPlayer.base_price?.toLocaleString() || 0} Cr
+                      ₹{(selectedPlayer.base_price || 0).toLocaleString()} Cr
                     </span>
                   </div>
                   <div className="squad-detail-row">
@@ -503,9 +592,11 @@ function Squads() {
                   <div className="squad-detail-row">
                     <span className="squad-detail-label">Status:</span>
                     <span
-                      className={`squad-detail-value squad-status-badge squad-status-${selectedPlayer.hammer}`}
+                      className={`squad-detail-value squad-status-badge squad-status-${
+                        selectedPlayer.hammer || "unsold"
+                      }`}
                     >
-                      {selectedPlayer.hammer}
+                      {selectedPlayer.hammer || "Unsold"}
                     </span>
                   </div>
                 </div>

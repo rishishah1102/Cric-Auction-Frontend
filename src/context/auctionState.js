@@ -3,6 +3,7 @@ import AuctionContext from "./auctionContext";
 import { instance } from "../utils/axios";
 
 const UserState = (props) => {
+  let token = localStorage.getItem("auction")
   const [userData, setUserData] = useState({});
   const [userAuctions, setUserAuctions] = useState([]);
 
@@ -10,7 +11,7 @@ const UserState = (props) => {
     const fetchData = async () => {
       try {
         const res = await instance.get("/profile/get", {
-          headers: { Authorization: localStorage.getItem("auction") },
+          headers: { Authorization: token },
         });
         if (res.status === 200) {
           setUserData(res.data.profile);
@@ -19,14 +20,16 @@ const UserState = (props) => {
         console.error("failed to fetch user");
       }
     };
-    fetchData();
-  }, []);
+    if (token) {
+      fetchData();
+    }
+  }, [token]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await instance.get("/auction/all?type=all", {
-          headers: { Authorization: localStorage.getItem("auction") },
+          headers: { Authorization: token },
         });
         if (res.status === 200) {
           const respAuctions = res.data.auctions || [];
@@ -37,8 +40,10 @@ const UserState = (props) => {
       }
     };
 
-    fetchData();
-  }, []);
+    if (token) {
+      fetchData();
+    }
+  }, [token]);
 
   return (
     <AuctionContext.Provider

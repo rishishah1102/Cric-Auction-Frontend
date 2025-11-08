@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchIcon from "@mui/icons-material/Search";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -24,23 +24,8 @@ function Home() {
 
   const { userAuctions } = useContext(auctionContext);
 
-  useEffect(() => {
-    document.title = "Home";
-    document.body.classList.add("scroll-enabled");
-    
-    if (userAuctions.length > 0) {
-      setAuctions(userAuctions)
-      setFilteredAuctions(userAuctions)
-      setLoading(false)
-    } else{
-      fetchAllAuctions();
-    }
-
-    return () => document.body.classList.remove("scroll-enabled");
-  }, [userAuctions]);
-
   // Fetch all auctions
-  const fetchAllAuctions = async () => {
+  const fetchAllAuctions = useCallback(async () => {
     try {
       setLoading(true);
       const res = await instance.get("/auction/all", {
@@ -61,7 +46,23 @@ function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    document.title = "Home";
+    document.body.classList.add("scroll-enabled");
+    
+    // Only use userAuctions if available and we're not already loading from API
+    if (userAuctions && userAuctions.length > 0 && auctions.length === 0) {
+      setAuctions(userAuctions);
+      setFilteredAuctions(userAuctions);
+      setLoading(false);
+    } else {
+      fetchAllAuctions();
+    }
+
+    return () => document.body.classList.remove("scroll-enabled");
+  }, [userAuctions, fetchAllAuctions, auctions.length]);
 
   // Handle closing filter dropdown when clicked outside
   useEffect(() => {
@@ -81,7 +82,7 @@ function Home() {
     };
   }, [filterOpen]);
 
-  const handleTabClick = async (tab) => {
+  const handleTabClick = useCallback(async (tab) => {
     setActiveTab(tab);
     setFilterOpen(false);
 
@@ -112,13 +113,21 @@ function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filteredAuctionCards = filteredAuctions.filter((card) =>
-    card?.auction_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter auctions based on search term
+  const filteredAuctionCards = useCallback(() => {
+    return filteredAuctions.filter((card) =>
+      card?.auction_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [filteredAuctions, searchTerm]);
 
   const handleJoinAuction = async (auctionId) => {
+    if (!auctionId) {
+      toast.error("Please enter a valid auction ID");
+      return;
+    }
+
     try {
       setLoading(true);
       const reqData = {
@@ -155,12 +164,17 @@ function Home() {
   };
 
   const handleCreateAuction = async (auctionData) => {
+    if (!auctionData?.auctionName) {
+      toast.error("Auction name is required");
+      return;
+    }
+
     try {
       let auctionObj = {
         "auction_name": auctionData.auctionName,
-        "auction_image": auctionData.auctionImg,
-        "auction_date": auctionData.auction_date,
-        "is_ipl_auction": auctionData.isIPLAuction,
+        "auction_image": auctionData.auctionImg || "",
+        "auction_date": auctionData.auction_date || new Date().toISOString(),
+        "is_ipl_auction": auctionData.isIPLAuction || false,
       }
 
       setLoading(true);
@@ -174,12 +188,23 @@ function Home() {
         toast.success("Auction created successfully!");
       }
     } catch (error) {
-      toast.error("Failed to create auction");
+      if (error.response?.status === 400) {
+        toast.error(error.response.data.error || "Invalid auction data");
+      } else if (error.response?.status === 401) {
+        toast.error("Unauthorized, Please login again!");
+      } else {
+        toast.error("Failed to create auction");
+      }
     } finally {
       setLoading(false);
       setCreateModalOpen(false);
     }
   };
+
+  // Reset search when tab changes
+  useEffect(() => {
+    setSearchTerm("");
+  }, [activeTab]);
 
   // Animation variants
   const containerVariants = {
@@ -204,6 +229,8 @@ function Home() {
       transition: { duration: 0.2 },
     },
   };
+
+  const currentFilteredAuctions = filteredAuctionCards();
 
   return (
     <motion.div
@@ -308,16 +335,26 @@ function Home() {
               </div>
               <p>Loading auctions...</p>
             </div>
-          ) : filteredAuctionCards.length > 0 ? (
+          ) : currentFilteredAuctions.length > 0 ? (
             <AnimatePresence>
-              {filteredAuctionCards.map((auction, idx) => (
-                <AuctionCard key={idx} auction={auction} />
+              {currentFilteredAuctions.map((auction, idx) => (
+                <AuctionCard key={auction.id || idx} auction={auction} />
               ))}
             </AnimatePresence>
           ) : (
             <div className="no-auctions">
-              <p>No auctions available</p>
-              {activeTab !== "all" && (
+              <GavelIcon className="no-auctions-icon" />
+              <p>
+                {searchTerm 
+                  ? `No auctions found matching "${searchTerm}"`
+                  : activeTab === "all"
+                  ? "No auctions available"
+                  : activeTab === "created"
+                  ? "You haven't created any auctions yet"
+                  : "You haven't joined any auctions yet"
+                }
+              </p>
+              {(activeTab === "created" || activeTab === "joined") && !searchTerm && (
                 <button
                   className="create-auction-btn"
                   onClick={() =>
@@ -326,7 +363,15 @@ function Home() {
                       : setJoinModalOpen(true)
                   }
                 >
-                  {activeTab === "created" ? "Create Auction" : "Join Auction"}
+                  {activeTab === "created" ? "Create Your First Auction" : "Join an Auction"}
+                </button>
+              )}
+              {searchTerm && (
+                <button
+                  className="clear-search-btn"
+                  onClick={() => setSearchTerm("")}
+                >
+                  Clear Search
                 </button>
               )}
             </div>
@@ -335,7 +380,7 @@ function Home() {
 
         {/* Floating Action Button */}
         {(activeTab === "created" || activeTab === "joined") &&
-          filteredAuctionCards.length > 0 && (
+          currentFilteredAuctions.length > 0 && (
             <motion.button
               className="fab"
               whileHover={{ scale: 1.1 }}
@@ -348,6 +393,7 @@ function Home() {
               aria-label={
                 activeTab === "created" ? "Create auction" : "Join auction"
               }
+              disabled={loading}
             >
               <AddIcon />
             </motion.button>
@@ -358,12 +404,14 @@ function Home() {
           isOpen={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
           onCreateAuction={handleCreateAuction}
+          loading={loading}
         />
 
         <JoinAuctionModal
           isOpen={joinModalOpen}
           onClose={() => setJoinModalOpen(false)}
           onJoinAuction={handleJoinAuction}
+          loading={loading}
         />
       </div>
     </motion.div>

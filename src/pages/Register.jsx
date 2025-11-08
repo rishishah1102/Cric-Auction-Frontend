@@ -28,10 +28,6 @@ const Register = () => {
 
   useEffect(() => {
     document.title = "Register";
-    document.body.classList.remove("scroll-enabled");
-    return () => {
-      document.body.classList.add("scroll-enabled");
-    };
   }, []);
 
   const handleChange = (e) => {

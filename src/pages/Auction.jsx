@@ -19,8 +19,9 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { Avatar } from "@mui/material";
+import parseExcel from "../utils/parse_excel";
+import FileUpload from "../components/auction/FileUpload";
 
 function AuctionPage() {
   const { userData } = useContext(auctionContext);
@@ -41,14 +42,13 @@ function AuctionPage() {
     auction_date: "",
   });
   const [imageLoading, setImageLoading] = useState(false);
-  const [playersFile, setPlayersFile] = useState(null);
+  const [players, setPlayers] = useState([]);
 
   // Team modal states
   const [teamData, setTeamData] = useState({
     team_name: "",
     team_image: "",
     team_owners: [],
-    user_names: []
   });
   const [teamImageLoading, setTeamImageLoading] = useState(false);
 
@@ -66,32 +66,44 @@ function AuctionPage() {
     };
   }, []);
 
-  const handleAuctionSelect = useCallback(async (auctionId) => {
-    try {
-      setLoading(true)
-      const response = await instance.post(
-        "/auction/get",
-        { auction_id: auctionId },
-        { headers: { Authorization: localStorage.getItem("auction") } }
-      );
-      if (response.status === 200) {
-        let selected = response.data.auction
-        setSelectedAuction(selected);
-        setIsEditor(selected.created_by === userData.email);
-        await fetchTeams(selected.id);
+  const handleAuctionSelect = useCallback(
+    async (auctionId) => {
+      if (!auctionId) {
+        setSelectedAuction(null);
+        setIsEditor(false);
+        setTeams([]);
+        return;
       }
-    } catch (error) {
-      if (error.response.status === 400 || error.response.status === 404) {
-        toast.error("Invalid Auction Id")
-      } else if (error.response.status === 401) {
-        toast.error("Please login again!")
-      } else {
-        toast.error("Please try again later!")
+
+      try {
+        setLoading(true);
+        const response = await instance.post(
+          "/auction/get",
+          { auction_id: auctionId },
+          { headers: { Authorization: localStorage.getItem("auction") } }
+        );
+        if (response.status === 200) {
+          let selected = response.data.auction;
+          setSelectedAuction(selected);
+          console.log(selected);
+
+          setIsEditor(selected.created_by === userData?.email);
+          await fetchTeams(selected.id);
+        }
+      } catch (error) {
+        if (error.response?.status === 400 || error.response?.status === 404) {
+          toast.error("Invalid Auction Id");
+        } else if (error.response?.status === 401) {
+          toast.error("Please login again!");
+        } else {
+          toast.error("Please try again later!");
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false)
-    }
-  }, [userData.email])
+    },
+    [userData?.email]
+  );
 
   const fetchAuctions = useCallback(async () => {
     try {
@@ -103,14 +115,14 @@ function AuctionPage() {
         const respAuctions = response.data.auctions || [];
         setAuctions(respAuctions);
         if (auctionId) {
-          await handleAuctionSelect(auctionId)
+          await handleAuctionSelect(auctionId);
         }
       }
     } catch (error) {
       if (error.response?.status === 401) {
-        toast.error("Please login again!")
+        toast.error("Please login again!");
       } else {
-        toast.error("Failed to load auctions!")
+        toast.error("Failed to load auctions!");
       }
     } finally {
       setLoading(false);
@@ -129,12 +141,12 @@ function AuctionPage() {
         setTeams(fetchedTeams);
       }
     } catch (error) {
-      if (error.response.status === 400 || error.response.status === 404) {
-        toast.error("Invalid Auction Id")
-      } else if (error.response.status === 401) {
-        toast.error("Please login again!")
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        toast.error("Invalid Auction Id");
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again!");
       } else {
-        toast.error("Failed to fetch teams!")
+        toast.error("Failed to fetch teams!");
       }
     }
   };
@@ -146,8 +158,10 @@ function AuctionPage() {
   }, [fetchAuctions, userData]);
 
   const copyAuctionId = () => {
-    navigator.clipboard.writeText(selectedAuction.id);
-    toast.success("Auction ID copied to clipboard!");
+    if (selectedAuction?.id) {
+      navigator.clipboard.writeText(selectedAuction.id);
+      toast.success("Auction ID copied to clipboard!");
+    }
   };
 
   const handleImageUpload = async (file) => {
@@ -197,9 +211,11 @@ function AuctionPage() {
   };
 
   const openEditModal = () => {
+    if (!selectedAuction) return;
+
     setEditData({
-      auction_name: selectedAuction.auction_name,
-      auction_image: selectedAuction.auction_image,
+      auction_name: selectedAuction.auction_name || "",
+      auction_image: selectedAuction.auction_image || "",
       is_ipl_auction: selectedAuction.is_ipl_auction || false,
       auction_date: selectedAuction.auction_date
         ? selectedAuction.auction_date.split("T")[0]
@@ -209,6 +225,8 @@ function AuctionPage() {
   };
 
   const handleEditSubmit = async () => {
+    if (!selectedAuction) return;
+
     const regex = /^\d{4}-\d{2}-\d{2}$/;
     try {
       setLoading(true);
@@ -234,21 +252,22 @@ function AuctionPage() {
       };
 
       // Handle players file upload if provided
-      if (playersFile) {
-        const formData = new FormData();
-        formData.append("players_file", playersFile);
-        formData.append("auction_id", selectedAuction.id);
-
-        // Upload players file (this would need to be implemented in your backend)
-        // await auctionAPI.post("/auction/players", formData, {
-        //   headers: {
-        //     Authorization: localStorage.getItem("auction"),
-        //     "Content-Type": "multipart/form-data"
-        //   },
-        // });
+      if (players.length !== 0) {
+        const res = await instance.post(
+          `/players/save?isIPLAuction=${selectedAuction.is_ipl_auction}`,
+          {"players": players, "auction_id": selectedAuction.id},
+          {
+            headers: {
+              Authorization: localStorage.getItem("auction"),
+            },
+          }
+        );
+        if (res.status === 200) {
+          toast.success("Players added successfully!!");
+        }
       }
 
-      const response = await instance.patch("/auction", updateData, {
+      const response = await instance.patch("/auction/update", updateData, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
 
@@ -256,12 +275,11 @@ function AuctionPage() {
         toast.success("Auction updated successfully!");
         const updatedAuction = { ...selectedAuction, ...updateData };
         setSelectedAuction(updatedAuction);
-        // setOriginalAuction({ ...updatedAuction });
         setAuctions((prev) =>
           prev.map((a) => (a.id === selectedAuction.id ? updatedAuction : a))
         );
         setEditModalOpen(false);
-        setPlayersFile(null);
+        setPlayers(null);
       }
     } catch (error) {
       toast.error("Failed to update auction!");
@@ -271,11 +289,13 @@ function AuctionPage() {
   };
 
   const openTeamModal = (team = null) => {
+    if (!selectedAuction) return;
+
     if (team) {
       setEditingTeam(team);
       setTeamData({
-        team_name: team.team_name,
-        team_image: team.team_image,
+        team_name: team.team_name || "",
+        team_image: team.team_image || "",
         team_owners: team.team_owners || [],
       });
     } else {
@@ -292,6 +312,8 @@ function AuctionPage() {
   };
 
   const handleTeamSubmit = async () => {
+    if (!selectedAuction) return;
+
     try {
       setLoading(true);
       let imageUrl = teamData.team_image;
@@ -346,6 +368,8 @@ function AuctionPage() {
   };
 
   const handleDeleteTeam = async (teamId) => {
+    if (!selectedAuction) return;
+
     if (window.confirm("Are you sure you want to delete this team?")) {
       try {
         setLoading(true);
@@ -374,7 +398,6 @@ function AuctionPage() {
       }));
     }
     setOwnerSearch("");
-    // setShowOwnerDropdown(false);
   };
 
   const removeOwnerFromTeam = (email) => {
@@ -383,28 +406,36 @@ function AuctionPage() {
       team_owners: prev.team_owners.filter((owner) => owner !== email),
     }));
   };
-  
-  let filteredUsers;
-  if (selectedAuction !== undefined || selectedAuction !== null)
-  filteredUsers = selectedAuction?.user_names
-    ?.filter(
-      (user) =>
-        user.email.toLowerCase().includes(ownerSearch.toLowerCase()) ||
-        (user.name &&
-          user.name.toLowerCase().includes(ownerSearch.toLowerCase()))
-    )
-    .filter((user) => !teamData.team_owners.includes(user.email));
+
+  // Fixed filteredUsers calculation with proper null checks
+  let filteredUsers = [];
+  if (selectedAuction && selectedAuction.user_names) {
+    filteredUsers = selectedAuction.user_names
+      .filter((user) => {
+        const emailMatch =
+          user.email?.toLowerCase().includes(ownerSearch.toLowerCase()) ||
+          false;
+        const nameMatch =
+          user.name?.toLowerCase().includes(ownerSearch.toLowerCase()) || false;
+        return emailMatch || nameMatch;
+      })
+      .filter((user) => !teamData.team_owners.includes(user.email));
+  }
 
   const formatDate = (dateString) => {
     if (!dateString) return "Not set";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      return "Invalid date";
+    }
   };
 
-  if (loading) {
+  if (loading && auctions.length === 0) {
     return (
       <div className="auction-container">
         <div className="loading-state">
@@ -422,6 +453,16 @@ function AuctionPage() {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5 } },
     exit: { opacity: 0 },
+  };
+
+  const handleFileUpload = async (file) => {
+    try {
+      const jsonData = await parseExcel(file);
+      console.log("JSON Data:", jsonData);
+      setPlayers(jsonData);
+    } catch (error) {
+      console.error("Error parsing Excel file:", error);
+    }
   };
 
   return (
@@ -598,12 +639,15 @@ function AuctionPage() {
                               {team.team_owners &&
                               team.team_owners.length > 0 ? (
                                 team.team_owners.map((owner, idx) => {
-                                  const person = selectedAuction.user_names.find((user) => user.email === owner)
+                                  const person =
+                                    selectedAuction.user_names?.find(
+                                      (user) => user.email === owner
+                                    );
                                   return (
                                     <span key={idx} className="owner-tag">
-                                      {person.name}
+                                      {person?.name || owner}
                                     </span>
-                                  )
+                                  );
                                 })
                               ) : (
                                 <span className="no-owners">
@@ -714,7 +758,7 @@ function AuctionPage() {
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
-                        if (e.target.files[0]) {
+                        if (e.target.files?.[0]) {
                           setEditData((prev) => ({
                             ...prev,
                             auction_image: e.target.files[0],
@@ -774,23 +818,18 @@ function AuctionPage() {
                 <div className="form-group">
                   <label>Players File (XLSX)</label>
                   <div className="file-upload-section">
-                    <input
-                      id="players-file-upload"
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={(e) => setPlayersFile(e.target.files[0])}
-                      style={{ display: "none" }}
-                    />
-                    <button
-                      className="file-upload-button"
-                      onClick={() =>
-                        document.getElementById("players-file-upload").click()
-                      }
-                    >
-                      <UploadFileIcon />
-                      {playersFile ? playersFile.name : "Upload Players File"}
-                    </button>
+                    <FileUpload onFileUpload={handleFileUpload} players={players} />
                   </div>
+                  <label>
+                    Note: Make sure the excel sheet in this format.{" "}
+                    <a
+                      target="_blank"
+                      href="https://docs.google.com/spreadsheets/d/1meJNbCnBgrs8cpQbqm4LhShY60fY16RlWcaBVc7gqa0/edit?usp=drivesdk"
+                      rel="noopener noreferrer"
+                    >
+                      Download
+                    </a>
+                  </label>
                 </div>
 
                 <div className="modal-actions">
@@ -880,7 +919,7 @@ function AuctionPage() {
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
-                        if (e.target.files[0]) {
+                        if (e.target.files?.[0]) {
                           setTeamData((prev) => ({
                             ...prev,
                             team_image: e.target.files[0],
@@ -914,10 +953,12 @@ function AuctionPage() {
                   {teamData.team_owners.length > 0 && (
                     <div className="selected-owners-container">
                       {teamData.team_owners.map((owner, index) => {
-                        const person = selectedAuction.user_names.find((user) => user.email === owner)
+                        const person = selectedAuction?.user_names?.find(
+                          (user) => user.email === owner
+                        );
                         return (
                           <div key={index} className="selected-owner-tag">
-                            <span>{person.name}</span>
+                            <span>{person?.name || owner}</span>
                             <button
                               type="button"
                               onClick={() => removeOwnerFromTeam(owner)}
@@ -926,7 +967,7 @@ function AuctionPage() {
                               <CloseIcon />
                             </button>
                           </div>
-                        )
+                        );
                       })}
                     </div>
                   )}
@@ -942,8 +983,8 @@ function AuctionPage() {
                       onFocus={() => setShowOwnerDropdown(true)}
                       onBlur={() => {
                         setTimeout(() => {
-                          setShowOwnerDropdown(false)
-                        }, 300)
+                          setShowOwnerDropdown(false);
+                        }, 300);
                       }}
                       placeholder="Search and add owners by email or name"
                       className="owner-search-input"
@@ -952,7 +993,7 @@ function AuctionPage() {
                     {/* Dropdown */}
                     {showOwnerDropdown && (
                       <div className="owner-dropdown">
-                        {filteredUsers?.length > 0 ? (
+                        {filteredUsers.length > 0 ? (
                           filteredUsers.map((user, index) => (
                             <div
                               key={index}
