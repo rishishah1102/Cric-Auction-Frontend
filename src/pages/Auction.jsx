@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import "../style/auction.css";
 import { motion, AnimatePresence } from "framer-motion";
 import auctionContext from "../context/auctionContext";
-import { auctionAPI } from "../utils/axios";
+import { instance } from "../utils/axios";
 import { toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
@@ -69,8 +69,8 @@ function AuctionPage() {
   const handleAuctionSelect = useCallback(async (auctionId) => {
     try {
       setLoading(true)
-      const response = await auctionAPI.post(
-        "/auction/",
+      const response = await instance.post(
+        "/auction/get",
         { auction_id: auctionId },
         { headers: { Authorization: localStorage.getItem("auction") } }
       );
@@ -96,7 +96,7 @@ function AuctionPage() {
   const fetchAuctions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await auctionAPI.get("/auction/all", {
+      const response = await instance.get("/auction/all", {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       if (response.status === 200) {
@@ -119,7 +119,7 @@ function AuctionPage() {
 
   const fetchTeams = async (auctionId) => {
     try {
-      const response = await auctionAPI.post(
+      const response = await instance.post(
         "/auction/team/all",
         { auction_id: auctionId },
         { headers: { Authorization: localStorage.getItem("auction") } }
@@ -248,7 +248,7 @@ function AuctionPage() {
         // });
       }
 
-      const response = await auctionAPI.patch("/auction", updateData, {
+      const response = await instance.patch("/auction", updateData, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
 
@@ -309,7 +309,7 @@ function AuctionPage() {
 
       if (editingTeam) {
         // Update existing team
-        const response = await auctionAPI.patch(
+        const response = await instance.patch(
           "/auction/team",
           {
             id: editingTeam.id,
@@ -325,7 +325,7 @@ function AuctionPage() {
           await fetchTeams(selectedAuction.id);
         }
       } else {
-        const response = await auctionAPI.post("/auction/team", teamPayload, {
+        const response = await instance.post("/auction/team", teamPayload, {
           headers: { Authorization: localStorage.getItem("auction") },
         });
 
@@ -349,7 +349,7 @@ function AuctionPage() {
     if (window.confirm("Are you sure you want to delete this team?")) {
       try {
         setLoading(true);
-        const response = await auctionAPI.delete("/auction/team", {
+        const response = await instance.delete("/auction/team", {
           data: { team_id: teamId, auction_id: selectedAuction.id },
           headers: { Authorization: localStorage.getItem("auction") },
         });
@@ -387,7 +387,7 @@ function AuctionPage() {
   let filteredUsers;
   if (selectedAuction !== undefined || selectedAuction !== null)
   filteredUsers = selectedAuction?.user_names
-    .filter(
+    ?.filter(
       (user) =>
         user.email.toLowerCase().includes(ownerSearch.toLowerCase()) ||
         (user.name &&
@@ -952,7 +952,7 @@ function AuctionPage() {
                     {/* Dropdown */}
                     {showOwnerDropdown && (
                       <div className="owner-dropdown">
-                        {filteredUsers.length > 0 ? (
+                        {filteredUsers?.length > 0 ? (
                           filteredUsers.map((user, index) => (
                             <div
                               key={index}

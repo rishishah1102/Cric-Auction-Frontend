@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import "../style/squads.css";
 import { motion, AnimatePresence } from "framer-motion";
 import auctionContext from "../context/auctionContext";
-import { auctionAPI, playerAPI } from "../utils/axios";
+import { instance } from "../utils/axios";
 import { toast } from "react-toastify";
 
 // Icons
@@ -42,7 +42,7 @@ function Squads() {
   const fetchAuctions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await auctionAPI.get("/auction/all", {
+      const response = await instance.get("/auction/all", {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       if (response.status === 200) {
@@ -58,7 +58,7 @@ function Squads() {
   const fetchTeams = async (auctionId) => {
     try {
       setLoading(true);
-      const response = await auctionAPI.post(
+      const response = await instance.post(
         "/auction/team/all",
         { auction_id: auctionId },
         { headers: { Authorization: localStorage.getItem("auction") } }
@@ -86,7 +86,7 @@ function Squads() {
     
     try {
       setLoading(true);
-      const response = await playerAPI.post(
+      const response = await instance.post(
         "/players/squad",
         { player_id: playerIds },
         { headers: { Authorization: localStorage.getItem("auction") } }
@@ -110,8 +110,8 @@ function Squads() {
     async (auctionId) => {
       try {
         setLoading(true);
-        const response = await auctionAPI.post(
-          "/auction/",
+        const response = await instance.post(
+          "/auction/get",
           { auction_id: auctionId },
           { headers: { Authorization: localStorage.getItem("auction") } }
         );

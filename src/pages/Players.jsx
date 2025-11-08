@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext, useCallback } from "react";
 import "../style/players.css";
 import { motion, AnimatePresence } from "framer-motion";
 import auctionContext from "../context/auctionContext";
-import { auctionAPI, playerAPI } from "../utils/axios";
+import { instance } from "../utils/axios";
 import { toast } from "react-toastify";
 
 // Icons
@@ -50,7 +50,7 @@ function Players() {
   const fetchAuctions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await auctionAPI.get("/auction/all", {
+      const response = await instance.get("/auction/all", {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       if (response.status === 200) {
@@ -66,7 +66,7 @@ function Players() {
   const fetchPlayers = async (auctionId) => {
     try {
       setLoading(true);
-      const response = await playerAPI.post(
+      const response = await instance.post(
         "/players/get",
         { auction_id: auctionId },
         { headers: { Authorization: localStorage.getItem("auction") } }
@@ -86,8 +86,8 @@ function Players() {
     async (auctionId) => {
       try {
         setLoading(true);
-        const response = await auctionAPI.post(
-          "/auction/",
+        const response = await instance.post(
+          "/auction/get",
           { auction_id: auctionId },
           { headers: { Authorization: localStorage.getItem("auction") } }
         );
@@ -172,7 +172,7 @@ function Players() {
   const handleEditSubmit = async () => {
     try {
       setLoading(true);
-      const response = await playerAPI.patch("/players/update", editData, {
+      const response = await instance.patch("/players/update", editData, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
 
@@ -193,7 +193,7 @@ function Players() {
     if (window.confirm("Are you sure you want to delete this player?")) {
       try {
         setLoading(true);
-        const response = await playerAPI.delete("/players/delete", {
+        const response = await instance.delete("/players/delete", {
           data: { player_id: selectedPlayer._id },
           headers: { Authorization: localStorage.getItem("auction") },
         });

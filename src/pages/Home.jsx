@@ -5,7 +5,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import AddIcon from "@mui/icons-material/Add";
 import GavelIcon from "@mui/icons-material/Gavel";
 import auctionContext from "../context/auctionContext";
-import { auctionAPI } from "../utils/axios";
+import { instance } from "../utils/axios";
 import { toast } from "react-toastify";
 import TabButton from "../components/home/HomeBtn";
 import AuctionCard from "../components/home/HomeAuctionCard";
@@ -43,7 +43,7 @@ function Home() {
   const fetchAllAuctions = async () => {
     try {
       setLoading(true);
-      const res = await auctionAPI.get("/auction/all", {
+      const res = await instance.get("/auction/all", {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       
@@ -95,7 +95,7 @@ function Home() {
         endpoint = "/auction/all?type=join";
       }
 
-      const res = await auctionAPI.get(endpoint, {
+      const res = await instance.get(endpoint, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
       
@@ -125,7 +125,7 @@ function Home() {
         auction_id: auctionId,
       };
 
-      const res = await auctionAPI.post("/auction/join", reqData, {
+      const res = await instance.post("/auction/join", reqData, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
 
@@ -164,7 +164,7 @@ function Home() {
       }
 
       setLoading(true);
-      const res = await auctionAPI.post("/auction/create", auctionObj, {
+      const res = await instance.post("/auction/create", auctionObj, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
 

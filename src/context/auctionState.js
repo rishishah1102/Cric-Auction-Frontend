@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AuctionContext from "./auctionContext";
-import { auctionAPI, instance } from "../utils/axios";
+import { instance } from "../utils/axios";
 
 const UserState = (props) => {
   const [userData, setUserData] = useState({});
@@ -25,7 +25,7 @@ const UserState = (props) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await auctionAPI.get("/auction/all?type=all", {
+        const res = await instance.get("/auction/all?type=all", {
           headers: { Authorization: localStorage.getItem("auction") },
         });
         if (res.status === 200) {
