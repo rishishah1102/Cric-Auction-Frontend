@@ -24,6 +24,7 @@ function Players() {
   const [auctions, setAuctions] = useState([]);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [players, setPlayers] = useState([]);
+  const [teams, setTeams] = useState([])
   const [filteredPlayers, setFilteredPlayers] = useState([]);
   const [isAuctioneer, setIsAuctioneer] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -164,9 +165,30 @@ function Players() {
     setSelectedPlayer(player);
   };
 
-  const openEditModal = () => {
+  const openEditModal = async () => {
     setEditData({ ...selectedPlayer });
     setEditModalOpen(true);
+    try {
+      const response = await instance.post(
+        "/auction/team/all",
+        { auction_id: selectedAuction.id },
+        { headers: { Authorization: localStorage.getItem("auction") } }
+      );
+      if (response.status === 200) {
+        const fetchedTeams = response.data.teams || [];
+        console.log(fetchedTeams);
+        
+        setTeams(fetchedTeams);
+      }
+    } catch (error) {
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        toast.error("Invalid Auction Id");
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again!");
+      } else {
+        toast.error("Failed to fetch teams!");
+      }
+    }
   };
 
   const handleEditSubmit = async () => {
@@ -432,14 +454,14 @@ function Players() {
                         </div>
                         <div className="info-row">
                           <span className="info-label">Role:</span>
-                          <span className="info-value">
-                            {player.role}
-                          </span>
+                          <span className="info-value">{player.role}</span>
                         </div>
                         <div className="info-row">
                           <span className="info-label">Current Team:</span>
                           <span className="info-value">
-                            {(player.hammer === "sold") ? player.current_team : "N/A"}
+                            {player.hammer === "sold"
+                              ? player.current_team
+                              : "N/A"}
                           </span>
                         </div>
                         {selectedAuction.is_ipl_auction && (
@@ -734,9 +756,13 @@ function Players() {
                       }
                     >
                       <option value="">Select</option>
-                      <option value="upcoming">Upcoming</option>
-                      <option value="sold">Sold</option>
-                      <option value="unsold">Unsold</option>
+                      {
+                        teams.map((team, index) => {
+                          return (
+                            <option value={team.team_name} key={index}>{team.team_name}</option>
+                          )
+                        })
+                      }
                     </select>
                   </div>
                 </div>
