@@ -2,7 +2,7 @@ import React from 'react'
 
 function PointsTable() {
   return (
-    <div>PointsTable</div>
+    <h1 style={{textAlign: "center", color: "black"}}>Under Construction</h1>
   )
 }
 

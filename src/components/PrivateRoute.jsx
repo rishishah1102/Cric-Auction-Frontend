@@ -1,23 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import "../style/navbar.css"
 import { Navigate } from "react-router-dom";
 import Navbar from "./navigation/Navbar";
-import auctionContext from '../context/auctionContext';
 
 const PrivateRoute = ({ element, headerText }) => {
     const [isOpen, setIsOpen] = useState(true)
-    const [profile, setProfile] = useState({
-        "firstName": "",
-        "lastName": "",
-    })
-
-    const {userData} = useContext(auctionContext)
-
-    useEffect(() => {
-        if (userData) {
-            setProfile(userData)
-        }
-    }, [userData])
 
     // Memoize handleOpen to prevent unnecessary re-renders
     const handleOpen = useCallback((open) => {

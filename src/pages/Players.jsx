@@ -319,7 +319,7 @@ function Players() {
                   className="filter-select"
                 >
                   <option value="all">All Roles</option>
-                  <option value="Batsman">Batsman</option>
+                  <option value="Batter">Batter</option>
                   <option value="Bowler">Bowler</option>
                   <option value="All-Rounder">All-Rounder</option>
                   <option value="Wicket-Keeper">Wicket-Keeper</option>

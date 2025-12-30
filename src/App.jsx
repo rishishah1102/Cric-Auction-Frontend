@@ -7,6 +7,8 @@ import Register from "./pages/Register";
 import { ToastContainer } from "react-toastify";
 import routes from "./utils/routes";
 import AuctionState from "./context/auctionState";
+import BiddingRoom from "./pages/BiddingRoom";
+import AuctionRoute from "./components/AuctionRoute";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +18,10 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/auction/live",
+    element: <AuctionRoute element={<BiddingRoom />} />,
   },
   ...routes
 ]);

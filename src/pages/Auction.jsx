@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
 import "../style/auction.css";
 import { motion, AnimatePresence } from "framer-motion";
 import auctionContext from "../context/auctionContext";
@@ -19,11 +20,14 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { Avatar } from "@mui/material";
 import parseExcel from "../utils/parse_excel";
 import FileUpload from "../components/auction/FileUpload";
 
 function AuctionPage() {
+  const navigate = useNavigate();
+
   const { userData } = useContext(auctionContext);
   const [auctions, setAuctions] = useState([]);
   const [selectedAuction, setSelectedAuction] = useState(null);
@@ -85,7 +89,6 @@ function AuctionPage() {
         if (response.status === 200) {
           let selected = response.data.auction;
           setSelectedAuction(selected);
-          console.log(selected);
 
           setIsEditor(selected.created_by === userData?.email);
           await fetchTeams(selected.id);
@@ -528,10 +531,16 @@ function AuctionPage() {
               </div>
 
               {isEditor && (
-                <button className="edit-auction-button" onClick={openEditModal}>
-                  <BorderColorIcon />
-                  Edit Auction
-                </button>
+                <>
+                  <button className="edit-auction-button" onClick={() => {
+                    navigate('/auction/live', { state: { auctionId: selectedAuction.id, auctionName: selectedAuction.auction_name } });
+                  }}>
+                    <PlayArrowIcon />
+                  </button>
+                  <button className="edit-auction-button" onClick={openEditModal}>
+                    <BorderColorIcon />
+                  </button>
+                </>
               )}
             </div>
 
@@ -637,7 +646,7 @@ function AuctionPage() {
                             <span className="owners-label">Owners:</span>
                             <div className="owners-list">
                               {team.team_owners &&
-                              team.team_owners.length > 0 ? (
+                                team.team_owners.length > 0 ? (
                                 team.team_owners.map((owner, idx) => {
                                   const person =
                                     selectedAuction.user_names?.find(
@@ -1037,8 +1046,8 @@ function AuctionPage() {
                     {teamImageLoading
                       ? "Uploading..."
                       : editingTeam
-                      ? "Update Team"
-                      : "Create Team"}
+                        ? "Update Team"
+                        : "Create Team"}
                   </button>
                 </div>
               </div>
