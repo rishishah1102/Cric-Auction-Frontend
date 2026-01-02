@@ -46,7 +46,8 @@ function AuctionPage() {
     auction_date: "",
   });
   const [imageLoading, setImageLoading] = useState(false);
-  const [players, setPlayers] = useState([]);
+  const [uploadedPlayers, setUploadedPlayers] = useState([]);
+  const [players, setPlayers] = useState(0);
 
   // Team modal states
   const [teamData, setTeamData] = useState({
@@ -154,6 +155,34 @@ function AuctionPage() {
     }
   };
 
+  const fetchPlayers = async (auctionId) => {
+    try {
+      const response = await instance.post(
+        "/players/get",
+        { auction_id: auctionId },
+        { headers: { Authorization: localStorage.getItem("auction") } }
+      );
+      if (response.status === 200) {
+        const fetchedPlayers = response.data.players || [];
+        setPlayers(fetchedPlayers.length);
+      }
+    } catch (error) {
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        toast.error("Invalid Auction Id");
+      } else if (error.response?.status === 401) {
+        toast.error("Please login again!");
+      } else {
+        toast.error("Failed to fetch teams!");
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (selectedAuction) {
+      fetchPlayers(selectedAuction.id);
+    }
+  }, [selectedAuction]);
+
   useEffect(() => {
     if (userData) {
       fetchAuctions();
@@ -255,10 +284,10 @@ function AuctionPage() {
       };
 
       // Handle players file upload if provided
-      if (players.length !== 0) {
+      if (uploadedPlayers.length !== 0) {
         const res = await instance.post(
           `/players/save?isIPLAuction=${selectedAuction.is_ipl_auction}`,
-          {"players": players, "auction_id": selectedAuction.id},
+          {"players": uploadedPlayers, "auction_id": selectedAuction.id},
           {
             headers: {
               Authorization: localStorage.getItem("auction"),
@@ -267,6 +296,7 @@ function AuctionPage() {
         );
         if (res.status === 200) {
           toast.success("Players added successfully!!");
+          await fetchPlayers(selectedAuction.id);
         }
       }
 
@@ -282,7 +312,7 @@ function AuctionPage() {
           prev.map((a) => (a.id === selectedAuction.id ? updatedAuction : a))
         );
         setEditModalOpen(false);
-        setPlayers(null);
+        setUploadedPlayers(null);
       }
     } catch (error) {
       toast.error("Failed to update auction!");
@@ -462,7 +492,7 @@ function AuctionPage() {
     try {
       const jsonData = await parseExcel(file);
       console.log("JSON Data:", jsonData);
-      setPlayers(jsonData);
+      setUploadedPlayers(jsonData);
     } catch (error) {
       console.error("Error parsing Excel file:", error);
     }
@@ -587,7 +617,7 @@ function AuctionPage() {
                 </div>
                 <div className="info-content">
                   <span className="info-label">Total Players</span>
-                  <span className="info-value">0</span>
+                  <span className="info-value">{players}</span>
                 </div>
               </div>
             </div>
@@ -827,7 +857,7 @@ function AuctionPage() {
                 <div className="form-group">
                   <label>Players File (XLSX)</label>
                   <div className="file-upload-section">
-                    <FileUpload onFileUpload={handleFileUpload} players={players} />
+                    <FileUpload onFileUpload={handleFileUpload} players={uploadedPlayers} />
                   </div>
                   <label>
                     Note: Make sure the excel sheet in this format.{" "}

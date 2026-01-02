@@ -795,3 +795,107 @@
         gap: 10px;
     }
 }
+
+/* Pagination Controls */
+.player-container .pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding: 20px 0;
+    gap: 20px;
+}
+
+.player-container .pagination-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: #0d2249;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.player-container .pagination-button:hover:not(:disabled) {
+    background: #0a1a36;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13, 34, 73, 0.2);
+}
+
+.player-container .pagination-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.player-container .pagination-button span:first-child,
+.player-container .pagination-button span:last-child {
+    font-size: 18px;
+}
+
+.player-container .pagination-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.player-container .pagination-info .page-numbers {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0d2249;
+}
+
+.player-container .pagination-info .item-count {
+    font-size: 13px;
+    color: #666;
+}
+
+/* Responsive Pagination */
+@media (max-width: 768px) {
+    .player-container .pagination-controls {
+        padding: 15px 0;
+        gap: 10px;
+    }
+
+    .player-container .pagination-button {
+        min-width: 100px;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+
+    .player-container .pagination-text {
+        display: none;
+    }
+
+    .player-container .pagination-button span:first-child,
+    .player-container .pagination-button span:last-child {
+        font-size: 20px;
+    }
+
+    .player-container .pagination-info .page-numbers {
+        font-size: 14px;
+    }
+
+    .player-container .pagination-info .item-count {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .player-container .pagination-controls {
+        margin-top: 20px;
+    }
+
+    .player-container .pagination-button {
+        min-width: 80px;
+        padding: 10px 12px;
+    }
+}

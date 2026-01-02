@@ -15,6 +15,8 @@ import SportsIcon from "@mui/icons-material/Sports";
 import SportsCricketIcon from "@mui/icons-material/SportsCricket";
 import FlightIcon from "@mui/icons-material/Flight";
 import TuneIcon from "@mui/icons-material/Tune";
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import { GiCricketBat } from "react-icons/gi";
 import { BiSolidCricketBall } from "react-icons/bi";
 import { GiWinterGloves } from "react-icons/gi";
@@ -22,6 +24,8 @@ import { GiWinterGloves } from "react-icons/gi";
 function Players() {
   const { userData } = useContext(auctionContext);
   const [auctions, setAuctions] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(15);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [players, setPlayers] = useState([]);
   const [teams, setTeams] = useState([])
@@ -146,6 +150,17 @@ function Players() {
     setFilteredPlayers(filtered);
   }, [searchTerm, roleFilter, hammerFilter, players]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPlayers.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedPlayers = filteredPlayers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, hammerFilter, selectedAuction]);
+
   const getRoleIcon = (role) => {
     switch (role?.toLowerCase()) {
       case "batter":
@@ -177,7 +192,7 @@ function Players() {
       if (response.status === 200) {
         const fetchedTeams = response.data.teams || [];
         console.log(fetchedTeams);
-        
+
         setTeams(fetchedTeams);
       }
     } catch (error) {
@@ -192,9 +207,17 @@ function Players() {
   };
 
   const handleEditSubmit = async () => {
+    console.log(editData.current_team);
+    
+    const team = teams.find(
+      (team) => team.team_name === editData.current_team
+    );
+    
+    const current_team_id = team?.id;
+
     try {
       setLoading(true);
-      const response = await instance.patch("/players/update", editData, {
+      const response = await instance.patch("/players/update", { ...editData, current_team_id }, {
         headers: { Authorization: localStorage.getItem("auction") },
       });
 
@@ -264,6 +287,42 @@ function Players() {
       default:
         return "#666";
     }
+  };
+
+  const PaginationControls = () => {
+    const canGoPrevious = currentPage > 1;
+    const canGoNext = currentPage < totalPages;
+
+    return (
+      <div className="pagination-controls">
+        <button
+          className="pagination-button"
+          onClick={() => setCurrentPage(prev => prev - 1)}
+          disabled={!canGoPrevious}
+        >
+          <span><SkipPreviousIcon /></span>
+          <span className="pagination-text">Previous</span>
+        </button>
+
+        <div className="pagination-info">
+          <span className="page-numbers">
+            Page {currentPage} of {totalPages}
+          </span>
+          <span className="item-count">
+            ({filteredPlayers.length} player{filteredPlayers.length !== 1 ? 's' : ''})
+          </span>
+        </div>
+
+        <button
+          className="pagination-button"
+          onClick={() => setCurrentPage(prev => prev + 1)}
+          disabled={!canGoNext}
+        >
+          <span className="pagination-text">Next</span>
+          <span><SkipNextIcon /></span>
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -415,7 +474,7 @@ function Players() {
             ) : (
               <div className="players-grid">
                 <AnimatePresence>
-                  {filteredPlayers.map((player, index) => (
+                  {paginatedPlayers.map((player, index) => (
                     <motion.div
                       key={player._id}
                       className="player-card"
@@ -489,6 +548,10 @@ function Players() {
                   ))}
                 </AnimatePresence>
               </div>
+            )}
+
+            {!loading && filteredPlayers.length > 0 && (
+              <PaginationControls />
             )}
           </motion.div>
         </div>
@@ -772,7 +835,7 @@ function Players() {
                     <label>Previous Fantasy Points</label>
                     <input
                       type="number"
-                      value={editData.prev_fantasy_points}
+                      value={editData.prev_fantasy_points || 0}
                       onChange={(e) =>
                         setEditData({
                           ...editData,
