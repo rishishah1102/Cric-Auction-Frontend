@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
@@ -10,8 +10,6 @@ import SportsCricketIcon from "@mui/icons-material/SportsCricket";
 import FlightIcon from "@mui/icons-material/Flight";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import SkipNextIcon from "@mui/icons-material/SkipNext";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
@@ -24,7 +22,6 @@ import { instance } from '../utils/axios';
 
 function BiddingRoom() {
     const navigate = useNavigate();
-
     const location = useLocation();
     const { auctionId, auctionName } = location.state || {};
 
@@ -34,47 +31,46 @@ function BiddingRoom() {
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [loading, setLoading] = useState(false);
     const [fetchingPlayer, setFetchingPlayer] = useState(false);
-    const [playerSource, setPlayerSource] = useState('upcoming');
     const [showConfetti, setShowConfetti] = useState(false);
+
+    const fetchTeams = useCallback(async () => {
+        if (!auctionId) return;
+
+        try {
+            setLoading(true);
+            const response = await instance.post(
+                "/bidding/teams/all",
+                { auction_id: auctionId },
+                { headers: { Authorization: localStorage.getItem("auction") } }
+            );
+            if (response.status === 200) {
+                const fetchedTeams = response.data.teams || [];
+                setTeams(fetchedTeams);
+            }
+        } catch (error) {
+            toast.error("Failed to fetch teams!");
+            console.error("Error fetching teams:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [auctionId]);
 
     useEffect(() => {
         document.title = `🔥 LIVE - ${auctionName || 'Auction'}`;
         document.body.classList.add("scroll-enabled");
-
-        const fetchTeams = async () => {
-            if (!auctionId) return;
-
-            try {
-                setLoading(true);
-                const response = await instance.post(
-                    "/bidding/teams/all",
-                    { auction_id: auctionId },
-                    { headers: { Authorization: localStorage.getItem("auction") } }
-                );
-                if (response.status === 200) {
-                    const fetchedTeams = response.data.teams || [];
-                    setTeams(fetchedTeams);
-                }
-            } catch (error) {
-                toast.error("Failed to fetch teams!");
-                console.error("Error fetching teams:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
 
         if (auctionId) {
             fetchTeams();
         }
 
         return () => document.body.classList.remove("scroll-enabled");
-    }, [auctionId, auctionName]);
+    }, [auctionId, auctionName, fetchTeams]);
 
-    const fetchPlayer = async (source) => {
+    const fetchPlayer = async () => {
         try {
             setFetchingPlayer(true);
             const response = await instance.post(
-                `/bidding/player/fetch?hammer=${source}`,
+                `/bidding/player/fetch`,
                 { auction_id: auctionId },
                 { headers: { Authorization: localStorage.getItem("auction") } }
             );
@@ -114,39 +110,30 @@ function BiddingRoom() {
         }
 
         try {
+            const reqPayload = {
+                player_id: currentPlayer.id,
+                team_id: selectedTeam.team_id,
+                team_name: selectedTeam.team_name,
+                selling_price: parseFloat(bidAmount),
+                auction_id: auctionId
+            };
+
             setLoading(true);
             const response = await instance.post(
-                "/bidding/players/sold",
-                {
-                    player_id: currentPlayer._id,
-                    team_id: selectedTeam.id,
-                    selling_price: parseFloat(bidAmount),
-                    auction_id: auctionId
-                },
+                "/bidding/player/sold",
+                reqPayload,
                 { headers: { Authorization: localStorage.getItem("auction") } }
             );
 
             if (response.status === 200) {
-                setTeams(prevTeams =>
-                    prevTeams.map(team =>
-                        team.id === selectedTeam.id
-                            ? {
-                                ...team,
-                                budget: team.team_purse - parseFloat(bidAmount),
-                                batters: currentPlayer.role === 'Batter' ? (team.batters || 0) + 1 : team.batters,
-                                bowler: currentPlayer.role === 'Bowler' ? (team.bowler || 0) + 1 : team.bowler,
-                                wicket_keepers: currentPlayer.role === 'Wicket-Keeper' ? (team.wicket_keepers || 0) + 1 : team.wicket_keepers,
-                                all_rounders: currentPlayer.role === 'All-Rounder' ? (team.all_rounders || 0) + 1 : team.all_rounders,
-                                overseas: currentPlayer.country !== 'India' ? (team.overseas || 0) + 1 : team.overseas
-                            }
-                            : team
-                    )
-                );
-
                 setShowConfetti(true);
                 setTimeout(() => setShowConfetti(false), 3000);
 
                 toast.success(`🎉 SOLD to ${selectedTeam.team_name}!`);
+
+                // Fetch updated teams data
+                await fetchTeams();
+
                 setCurrentPlayer(null);
                 setBidAmount('');
                 setSelectedTeam(null);
@@ -165,9 +152,9 @@ function BiddingRoom() {
         try {
             setLoading(true);
             const response = await instance.post(
-                "bidding/players/unsold",
+                "bidding/player/unsold",
                 {
-                    player_id: currentPlayer._id,
+                    player_id: currentPlayer.id,
                     auction_id: auctionId
                 },
                 { headers: { Authorization: localStorage.getItem("auction") } }
@@ -252,7 +239,7 @@ function BiddingRoom() {
                                     ease: "linear"
                                 }}
                                 style={{
-                                    backgroundColor: ['#fbbf24', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'][Math.floor(Math.random() * 6)]
+                                    backgroundColor: ['#ff9a8b', '#feca57', '#48dbfb', '#ff6b6b', '#ee5a6f', '#a29bfe'][Math.floor(Math.random() * 6)]
                                 }}
                             />
                         ))}
@@ -298,7 +285,6 @@ function BiddingRoom() {
 
             {/* Main Arena */}
             <div className="auction-arena">
-
                 {/* Center Stage - Player Display */}
                 <div className="center-stage">
                     {!currentPlayer && !fetchingPlayer && (
@@ -311,30 +297,9 @@ function BiddingRoom() {
                                 <GavelIcon /> BRING OUT THE NEXT PLAYER
                             </h2>
 
-                            <div className="source-selector">
-                                <motion.button
-                                    className={`source-button ${playerSource === 'upcoming' ? 'active' : ''}`}
-                                    onClick={() => setPlayerSource('upcoming')}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <PlayArrowIcon />
-                                    <span>UPCOMING</span>
-                                </motion.button>
-                                <motion.button
-                                    className={`source-button ${playerSource === 'unsold' ? 'active' : ''}`}
-                                    onClick={() => setPlayerSource('unsold')}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <SkipNextIcon />
-                                    <span>UNSOLD</span>
-                                </motion.button>
-                            </div>
-
                             <motion.button
                                 className="fetch-player-button"
-                                onClick={() => fetchPlayer(playerSource)}
+                                onClick={fetchPlayer}
                                 disabled={fetchingPlayer}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -506,6 +471,28 @@ function BiddingRoom() {
                                             </div>
                                         </div>
 
+                                        <div className="teams-bidding-grid">
+                                            {teams.map((team) => (
+                                                <motion.button
+                                                    key={team.team_id}
+                                                    className={`team-bid-button ${selectedTeam?.team_id === team.team_id ? 'selected' : ''}`}
+                                                    onClick={() => handleBid(team)}
+                                                    disabled={loading || team.team_purse < parseFloat(bidAmount || 0)}
+                                                    whileHover={{ scale: 1.03 }}
+                                                    whileTap={{ scale: 0.97 }}
+                                                >
+                                                    {team.team_image ? (
+                                                        <img src={team.team_image} alt={team.team_name} className="team-bid-logo" />
+                                                    ) : (
+                                                        <div className="team-bid-logo-placeholder">
+                                                            <SportsIcon />
+                                                        </div>
+                                                    )}
+                                                    <span>{team.team_name}</span>
+                                                </motion.button>
+                                            ))}
+                                        </div>
+
                                         <AnimatePresence>
                                             {selectedTeam && (
                                                 <motion.div
@@ -556,8 +543,8 @@ function BiddingRoom() {
                     <div className="teams-carousel">
                         {teams.map((team, index) => (
                             <motion.div
-                                key={team.id}
-                                className={`team-card-mini ${selectedTeam?.id === team.id ? 'selected' : ''}`}
+                                key={team.team_id}
+                                className="team-card-mini"
                                 initial={{ opacity: 0, x: 50 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.1 }}
@@ -582,7 +569,7 @@ function BiddingRoom() {
                                 <div className="team-mini-stats">
                                     <div className="mini-stat">
                                         <GiCricketBat />
-                                        <span>{team.batters || 0}</span>
+                                        <span>{team.batter || 0}</span>
                                     </div>
                                     <div className="mini-stat">
                                         <BiSolidCricketBall />
@@ -590,29 +577,17 @@ function BiddingRoom() {
                                     </div>
                                     <div className="mini-stat">
                                         <GiWinterGloves />
-                                        <span>{team.wicket_keepers || 0}</span>
+                                        <span>{team.wicket_keeper || 0}</span>
                                     </div>
                                     <div className="mini-stat">
                                         <SportsCricketIcon />
-                                        <span>{team.all_rounders || 0}</span>
+                                        <span>{team.all_rounder || 0}</span>
                                     </div>
                                     <div className="mini-stat">
                                         <FlightIcon />
                                         <span>{team.overseas || 0}</span>
                                     </div>
                                 </div>
-
-                                {currentPlayer && (
-                                    <motion.button
-                                        className="bid-btn"
-                                        onClick={() => handleBid(team)}
-                                        disabled={loading || team.team_purse < parseFloat(bidAmount || 0)}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                    >
-                                        PLACE BID
-                                    </motion.button>
-                                )}
                             </motion.div>
                         ))}
                     </div>
