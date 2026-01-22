@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
-import "../style/squads.css";
 import { motion, AnimatePresence } from "framer-motion";
 import auctionContext from "../context/auctionContext";
 import { instance } from "../utils/axios";
 import { toast } from "react-toastify";
+
+import "../style/squads.css";
 
 // Icons
 import GavelIcon from "@mui/icons-material/Gavel";
@@ -12,598 +13,913 @@ import SportsIcon from "@mui/icons-material/Sports";
 import SportsCricketIcon from "@mui/icons-material/SportsCricket";
 import FlightIcon from "@mui/icons-material/Flight";
 import GroupsIcon from "@mui/icons-material/Groups";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import LockIcon from "@mui/icons-material/Lock";
+import PeopleIcon from "@mui/icons-material/People";
+import TimerIcon from "@mui/icons-material/Timer";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+// import InfoIcon from "@mui/icons-material/Info";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 import { GiCricketBat } from "react-icons/gi";
 import { BiSolidCricketBall } from "react-icons/bi";
 import { GiWinterGloves } from "react-icons/gi";
 
 function Squads() {
   const { userData } = useContext(auctionContext);
+
+  // Main data states
   const [auctions, setAuctions] = useState([]);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
-  const [squadPlayers, setSquadPlayers] = useState({
-    batters: [],
-    bowlers: [],
-    all_rounders: [],
-    wicket_keepers: [],
-  });
+  const [allSquadPlayers, setAllSquadPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+  // View states
+  const [currentView, setCurrentView] = useState("squad");
+  const [selectedPlayerForDetail, setSelectedPlayerForDetail] = useState(null);
+
+  // Playing 11 states
+  const [savedPlaying11Ids, setSavedPlaying11Ids] = useState([]);
+  const [editingPlaying11, setEditingPlaying11] = useState(false);
+  const [draftPlaying11Ids, setDraftPlaying11Ids] = useState([]);
+  const [isOwner, setIsOwner] = useState(false);
+  const [canEditWeekend, setCanEditWeekend] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Check if it's weekend (Saturday, Sunday)
+  const checkWeekendStatus = useCallback(() => {
+    const now = new Date();
+    const day = now.getDay();
+    // 6 = Saturday, 0 = Sunday
+    setCanEditWeekend(day === 6 || day === 0);
+  }, []);
 
   useEffect(() => {
     document.title = "Squad";
     document.body.classList.add("scroll-enabled");
-    return () => {
-      document.body.classList.remove("scroll-enabled");
-    };
-  }, []);
+    checkWeekendStatus();
+    const timer = setInterval(checkWeekendStatus, 60000); // Check every minute
+    return () => clearInterval(timer);
+  }, [checkWeekendStatus]);
 
-  const fetchAuctions = useCallback(async () => {
+  // Fetch auctions
+  const loadAuctions = useCallback(async () => {
+    if (!userData) return;
+
     try {
       setLoading(true);
-      const response = await instance.get("/auction/all", {
+      const res = await instance.get("/auction/all", {
         headers: { Authorization: localStorage.getItem("auction") },
       });
-      if (response.status === 200) {
-        setAuctions(response.data.auctions || []);
+
+      if (res.status === 200) {
+        setAuctions(res.data.auctions || []);
       }
     } catch (error) {
       if (error.response?.status === 401) {
-        toast.error("Please login again!");
+        toast.error("Session expired. Please login again!");
       } else {
-        toast.error("Failed to load auctions!");
+        toast.error("Failed to load auctions");
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userData]);
 
-  const fetchTeams = async (auctionId) => {
+  useEffect(() => {
+    loadAuctions();
+  }, [loadAuctions]);
+
+  // Fetch teams for selected auction
+  const loadTeams = async (auctionId) => {
     try {
       setLoading(true);
-      const response = await instance.post(
+      const res = await instance.post(
         "/auction/team/all",
         { auction_id: auctionId },
         { headers: { Authorization: localStorage.getItem("auction") } }
       );
-      if (response.status === 200) {
-        const fetchedTeams = response.data.teams || [];
-        setTeams(fetchedTeams);
-        setSelectedTeam(null);
-        setSquadPlayers({
-          batters: [],
-          bowlers: [],
-          all_rounders: [],
-          wicket_keepers: [],
-        });
+
+      if (res.status === 200) {
+        setTeams(res.data.teams || []);
       }
     } catch (error) {
-      if (error.response?.status === 400 || error.response?.status === 404) {
-        toast.error("Invalid Auction Id");
-      } else if (error.response?.status === 401) {
-        toast.error("Please login again!");
-      } else {
-        toast.error("Failed to fetch teams!");
-      }
+      toast.error("Failed to load teams");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchSquad = async (playerIds) => {
+  // Fetch squad players
+  const loadSquadPlayers = async (playerIds) => {
     if (!playerIds || playerIds.length === 0) {
-      setSquadPlayers({
-        batters: [],
-        bowlers: [],
-        all_rounders: [],
-        wicket_keepers: [],
-      });
+      setAllSquadPlayers([]);
       return;
     }
 
     try {
       setLoading(true);
-      const response = await instance.post(
+      const res = await instance.post(
         "/players/squad",
         { player_id: playerIds },
         { headers: { Authorization: localStorage.getItem("auction") } }
       );
 
-      if (response.status === 200) {
-        setSquadPlayers(
-          response.data.squad || {
-            batters: [],
-            bowlers: [],
-            all_rounders: [],
-            wicket_keepers: [],
-          }
-        );
+      if (res.status === 200) {
+        const squad = res.data.squad || {};
+        // Flatten all players into single array
+        const flattenedPlayers = [
+          ...(squad.batters || []),
+          ...(squad.bowlers || []),
+          ...(squad.all_rounders || []),
+          ...(squad.wicket_keepers || []),
+        ];
+        setAllSquadPlayers(flattenedPlayers);
       }
     } catch (error) {
-      if (error.response?.status === 401) {
-        toast.error("Please login again!");
-      } else {
-        toast.error("Failed to fetch squad!");
-      }
+      toast.error("Failed to load squad");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAuctionSelect = useCallback(async (auctionId) => {
+  // Fetch saved playing 11
+  const loadPlaying11 = async (teamId) => {
+    try {
+      const res = await instance.post(
+        "/players/eleven/get",
+        { team_id: teamId },
+        { headers: { Authorization: localStorage.getItem("auction") } }
+      );
+
+      if (res.status === 200 && res.data.playing11) {
+        const p11 = Array.isArray(res.data.playing11) ? res.data.playing11 : [];
+        // Filter out null values and convert to strings
+        const validIds = p11.map(player => player._id)  
+        setSavedPlaying11Ids(validIds);
+      } else {
+        setSavedPlaying11Ids([]);
+      }
+    } catch (error) {
+      setSavedPlaying11Ids([]);
+    }
+  };
+
+  // Handle auction selection
+  const handleSelectAuction = async (auctionId) => {
     if (!auctionId) {
       setSelectedAuction(null);
       setTeams([]);
       setSelectedTeam(null);
-      setSquadPlayers({
-        batters: [],
-        bowlers: [],
-        all_rounders: [],
-        wicket_keepers: [],
-      });
+      setAllSquadPlayers([]);
+      setSavedPlaying11Ids([]);
+      setCurrentView("squad");
       return;
     }
 
     try {
       setLoading(true);
-      const response = await instance.post(
+      const res = await instance.post(
         "/auction/get",
         { auction_id: auctionId },
         { headers: { Authorization: localStorage.getItem("auction") } }
       );
-      if (response.status === 200) {
-        let selected = response.data.auction;
-        setSelectedAuction(selected);
-        await fetchTeams(selected.id);
+
+      if (res.status === 200) {
+        setSelectedAuction(res.data.auction);
+        await loadTeams(res.data.auction.id);
+        setSelectedTeam(null);
+        setAllSquadPlayers([]);
+        setSavedPlaying11Ids([]);
+        setCurrentView("squad");
       }
     } catch (error) {
-      if (error.response?.status === 400 || error.response?.status === 404) {
-        toast.error("Invalid Auction Id");
-      } else if (error.response?.status === 401) {
-        toast.error("Please login again!");
-      } else {
-        toast.error("Please try again later!");
-      }
+      toast.error("Failed to load auction");
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const handleTeamSelect = useCallback(
-    async (teamId) => {
-      if (!teamId) {
-        setSelectedTeam(null);
-        setSquadPlayers({
-          batters: [],
-          bowlers: [],
-          all_rounders: [],
-          wicket_keepers: [],
-        });
-        return;
-      }
-
-      const team = teams.find((t) => t.id === teamId);
-      if (team) {
-        setSelectedTeam(team);
-
-        if (team.squad && team.squad.length > 0) {
-          await fetchSquad(team.squad);
-        } else {
-          setSquadPlayers({
-            batters: [],
-            bowlers: [],
-            all_rounders: [],
-            wicket_keepers: [],
-          });
-        }
-      }
-    },
-    [teams]
-  );
-
-  useEffect(() => {
-    if (userData) {
-      fetchAuctions();
+  // Handle team selection
+  const handleSelectTeam = async (teamId) => {
+    if (!teamId) {
+      setSelectedTeam(null);
+      setAllSquadPlayers([]);
+      setSavedPlaying11Ids([]);
+      setIsOwner(false);
+      return;
     }
-  }, [fetchAuctions, userData]);
 
-  // Calculate total selling price
-  const calculateTotalSellingPrice = useCallback(() => {
-    let total = 0;
+    const team = teams.find(t => t.id === teamId);
+    if (!team) return;
 
-    // Safely calculate total from all player categories
-    const allPlayers = [
-      ...(squadPlayers.batters || []),
-      ...(squadPlayers.bowlers || []),
-      ...(squadPlayers.all_rounders || []),
-      ...(squadPlayers.wicket_keepers || []),
-    ];
+    setSelectedTeam(team);
 
-    allPlayers.forEach((player) => {
-      if (player && typeof player.selling_price === "number") {
-        total += player.selling_price;
+    // Check ownership
+    const owners = team.team_owners || [];
+    const userEmail = userData?.email || "";
+    setIsOwner(owners.includes(userEmail));
+
+    // Load squad
+    if (team.squad && team.squad.length > 0) {
+      await loadSquadPlayers(team.squad);
+
+      // Load playing 11 if IPL auction
+      if (selectedAuction?.is_ipl_auction) {
+        await loadPlaying11(team.id);
+      }
+    } else {
+      setAllSquadPlayers([]);
+      setSavedPlaying11Ids([]);
+    }
+  };
+
+  // Get player by ID
+  const getPlayerById = (playerId) => {
+    if (!playerId) return null;
+    return allSquadPlayers.find(p => p.id === playerId);
+  };
+
+  // Categorize players by role
+  const categorizeByRole = (players) => {
+    const categories = {
+      batters: [],
+      bowlers: [],
+      allRounders: [],
+      wicketKeepers: []
+    };
+
+    players.forEach(player => {
+      const role = (player.role || "").toLowerCase();
+      if (role.includes("batter") || role.includes("batsman")) {
+        categories.batters.push(player);
+      } else if (role.includes("bowler")) {
+        categories.bowlers.push(player);
+      } else if (role.includes("all-rounder")) {
+        categories.allRounders.push(player);
+      } else if (role.includes("wicket-keeper")) {
+        categories.wicketKeepers.push(player);
       }
     });
 
-    return total;
-  }, [squadPlayers]);
+    return categories;
+  };
 
+  // Get role icon
   const getRoleIcon = (role) => {
-    if (!role) return <SportsIcon />;
+    const r = (role || "").toLowerCase();
+    if (r.includes("batter") || r.includes("batsman")) return <GiCricketBat />;
+    if (r.includes("bowler")) return <BiSolidCricketBall />;
+    if (r.includes("all-rounder")) return <SportsCricketIcon />;
+    if (r.includes("wicket-keeper")) return <GiWinterGloves />;
+    return <SportsIcon />;
+  };
 
-    switch (role.toLowerCase()) {
-      case "batter":
-      case "batsman":
-        return <GiCricketBat />;
-      case "bowler":
-        return <BiSolidCricketBall />;
-      case "all-rounder":
-        return <SportsCricketIcon />;
-      case "wicket-keeper":
-        return <GiWinterGloves />;
-      default:
-        return <SportsIcon />;
+  // Calculate stats
+  const calculateStats = () => {
+    const totalSpent = allSquadPlayers.reduce((sum, p) => sum + (p.selling_price || 0), 0);
+    return {
+      totalPlayers: allSquadPlayers.length,
+      totalSpent: totalSpent,
+      remaining: 100 - totalSpent
+    };
+  };
+
+  // Start editing playing 11
+  const startEditingPlaying11 = () => {
+    if (!canEditWeekend) {
+      toast.error("Playing 11 can only be edited on Saturday, or Sunday!");
+      return;
+    }
+    if (!isOwner) {
+      toast.error("Only team owners can edit Playing 11");
+      return;
+    }
+
+    setDraftPlaying11Ids([...savedPlaying11Ids]);
+    setEditingPlaying11(true);
+  };
+
+  // Toggle player in draft
+  const togglePlayerInDraft = (playerId) => {
+    const id = playerId;
+    const currentIndex = draftPlaying11Ids.findIndex(pid => pid === id);
+
+    if (currentIndex >= 0) {
+      // Remove player
+      setDraftPlaying11Ids(draftPlaying11Ids.filter(pid => pid !== id));
+    } else {
+      // Add player
+      if (draftPlaying11Ids.length >= 11) {
+        toast.error("Maximum 11 players allowed");
+        return;
+      }
+      setDraftPlaying11Ids([...draftPlaying11Ids, id]);
     }
   };
 
-  const handlePlayerClick = (player) => {
-    if (player && player.player_name) {
-      setSelectedPlayer(player);
+  // Validate playing 11
+  const validatePlaying11 = (playerIds) => {
+    const errors = [];
+
+    if (playerIds.length !== 11) {
+      errors.push(`Must select exactly 11 players (currently ${playerIds.length})`);
+    }
+
+    const players = playerIds.map(id => getPlayerById(id)).filter(p => p);
+
+    const counts = {
+      batters: 0,
+      bowlers: 0,
+      allRounders: 0,
+      keepers: 0,
+      overseas: 0
+    };
+
+    players.forEach(p => {
+      const role = (p.role || "").toLowerCase();
+      const country = (p.country || "").toLowerCase();
+
+      if (role.includes("batter") || role.includes("batsman")) counts.batters++;
+      if (role.includes("bowler")) counts.bowlers++;
+      if (role.includes("all-rounder")) counts.allRounders++;
+      if (role.includes("wicket-keeper")) counts.keepers++;
+      if (country && country !== "india") counts.overseas++;
+    });
+
+    if (counts.batters < 2) errors.push(`Need at least 2 batters (have ${counts.batters})`);
+    if (counts.bowlers < 3) errors.push(`Need at least 3 bowlers (have ${counts.bowlers})`);
+    if (counts.allRounders < 1) errors.push(`Need at least 1 all-rounder (have ${counts.allRounders})`);
+    if (counts.keepers < 1) errors.push(`Need at least 1 wicket-keeper (have ${counts.keepers})`);
+    if (counts.overseas > 4) errors.push(`Maximum 4 overseas players (have ${counts.overseas})`);
+
+    return errors;
+  };
+
+  // Save playing 11
+  const savePlaying11 = async () => {
+    const errors = validatePlaying11(draftPlaying11Ids);
+    if (errors.length > 0) {
+      toast.error(errors[0]);
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const res = await instance.post(
+        "/players/eleven/save",
+        {
+          player_ids: draftPlaying11Ids
+        },
+        { headers: { Authorization: localStorage.getItem("auction") } }
+      );
+
+      if (res.status === 200) {
+        toast.success("Playing 11 saved successfully!");
+        setSavedPlaying11Ids([...draftPlaying11Ids]);
+        setEditingPlaying11(false);
+      }
+    } catch (error) {
+      toast.error("Failed to save Playing 11");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const renderPlayerCard = (player, index) => {
-    if (!player || !player.player_name) return null;
+  // Render player card
+  const renderPlayerCard = (player, showP11Badge = false) => {
+    const isInP11 = savedPlaying11Ids.some(id => id === player._id);
+    const isOverseas = selectedAuction?.is_ipl_auction &&
+      player.country &&
+      player.country.toLowerCase() !== "india";
 
     return (
       <motion.div
-        key={player._id || player.id || index}
-        className="squad-player-card"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ delay: index * 0.05 }}
-        onClick={() => handlePlayerClick(player)}
+        key={player._id}
+        className="player-card"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.02 }}
+        onClick={() => setSelectedPlayerForDetail(player)}
       >
-        <div className="squad-player-header">
-          <div className="squad-player-name-section">
-            <h4 className="squad-player-name">{player.player_name}</h4>
-            <div className="squad-role-icon">{getRoleIcon(player.role)}</div>
-            {selectedAuction?.is_ipl_auction &&
-              player.country &&
-              player.country !== "India" && (
-                <FlightIcon className="squad-overseas-icon" />
-              )}
+        {showP11Badge && isInP11 && (
+          <div className="p11-badge">
+            <EmojiEventsIcon fontSize="small" /> P11
+          </div>
+        )}
+
+        <div className="player-card-top">
+          <div className="player-name-section">
+            <h4>{player.player_name}</h4>
+            <span className="player-role">{player.role}</span>
+          </div>
+          <div className="player-role-icon">
+            {getRoleIcon(player.role)}
           </div>
         </div>
 
-        <div className="squad-player-info">
-          <div className="squad-info-row">
-            <span className="squad-info-label">Base Price:</span>
-            <span className="squad-info-value">
-              ₹{(player.base_price || 0).toLocaleString()} Cr
-            </span>
+        <div className="player-card-info">
+          <div className="info-line">
+            <span>Base:</span>
+            <span>₹{(player.base_price || 0).toFixed(1)} Cr</span>
           </div>
-          <div className="squad-info-row">
-            <span className="squad-info-label">Selling Price:</span>
-            <span className="squad-info-value">
-              {player.selling_price
-                ? `₹${player.selling_price.toLocaleString()} Cr`
-                : "N/A"}
-            </span>
+          <div className="info-line">
+            <span>Sold:</span>
+            <span>{player.selling_price ? `₹${player.selling_price.toFixed(1)} Cr` : "N/A"}</span>
           </div>
           {selectedAuction?.is_ipl_auction && (
-            <>
-              <div className="squad-info-row">
-                <span className="squad-info-label">Country:</span>
-                <span className="squad-info-value">
-                  {player.country || "N/A"}
-                </span>
-              </div>
-              <div className="squad-info-row">
-                <span className="squad-info-label">IPL Team:</span>
-                <span className="squad-info-value">
-                  {player.ipl_team || "N/A"}
-                </span>
-              </div>
-            </>
+            <div className="info-line">
+              <span>Country:</span>
+              <span className="country-info">
+                {isOverseas && <FlightIcon fontSize="small" />}
+                {player.country || "N/A"}
+              </span>
+            </div>
           )}
         </div>
       </motion.div>
     );
   };
 
-  const renderSquadSection = (title, players, icon) => {
-    if (!players || players.length === 0) return null;
+  // Render squad view
+  const renderSquadView = () => {
+    if (allSquadPlayers.length === 0) {
+      return (
+        <div className="empty-content">
+          <SportsIcon className="empty-icon" />
+          <h3>No Players</h3>
+          <p>This team hasn't bought any players yet</p>
+        </div>
+      );
+    }
+
+    const categorized = categorizeByRole(allSquadPlayers);
 
     return (
-      <div className="squad-section">
-        <div className="squad-section-header">
-          <div className="squad-section-icon">{icon}</div>
-          <h3 className="squad-section-title">
-            {title} ({players.length})
-          </h3>
-        </div>
-        <div className="squad-players-grid">
-          {players.map((player, index) => renderPlayerCard(player, index))}
-        </div>
+      <div className="squad-view">
+        {categorized.batters.length > 0 && (
+          <div className="role-section">
+            <div className="role-header">
+              <GiCricketBat className="role-icon" />
+              <h3>Batters ({categorized.batters.length})</h3>
+            </div>
+            <div className="players-grid">
+              {categorized.batters.map(p => renderPlayerCard(p, true))}
+            </div>
+          </div>
+        )}
+
+        {categorized.bowlers.length > 0 && (
+          <div className="role-section">
+            <div className="role-header">
+              <BiSolidCricketBall className="role-icon" />
+              <h3>Bowlers ({categorized.bowlers.length})</h3>
+            </div>
+            <div className="players-grid">
+              {categorized.bowlers.map(p => renderPlayerCard(p, true))}
+            </div>
+          </div>
+        )}
+
+        {categorized.allRounders.length > 0 && (
+          <div className="role-section">
+            <div className="role-header">
+              <SportsCricketIcon className="role-icon" />
+              <h3>All-Rounders ({categorized.allRounders.length})</h3>
+            </div>
+            <div className="players-grid">
+              {categorized.allRounders.map(p => renderPlayerCard(p, true))}
+            </div>
+          </div>
+        )}
+
+        {categorized.wicketKeepers.length > 0 && (
+          <div className="role-section">
+            <div className="role-header">
+              <GiWinterGloves className="role-icon" />
+              <h3>Wicket-Keepers ({categorized.wicketKeepers.length})</h3>
+            </div>
+            <div className="players-grid">
+              {categorized.wicketKeepers.map(p => renderPlayerCard(p, true))}
+            </div>
+          </div>
+        )}
       </div>
     );
   };
 
+  // Render playing 11 view
+  const renderPlaying11View = () => {
+    const selectedPlayers = savedPlaying11Ids
+      .map(id => getPlayerById(id))
+      .filter(p => p);
+
+    return (
+      <div className="playing11-view">
+        <div className="p11-header">
+          <div className="p11-title">
+            <h2><EmojiEventsIcon /> Playing 11</h2>
+            <p>Your team lineup for this week</p>
+          </div>
+
+          {isOwner && (
+            <motion.button
+              className="edit-p11-btn"
+              onClick={startEditingPlaying11}
+              disabled={!canEditWeekend}
+              whileHover={canEditWeekend ? { scale: 1.05 } : {}}
+              whileTap={canEditWeekend ? { scale: 0.95 } : {}}
+            >
+              <EditIcon />
+              {savedPlaying11Ids.length > 0 ? "Edit Team" : "Select Team"}
+            </motion.button>
+          )}
+        </div>
+
+        {!canEditWeekend && (
+          <div className="weekend-alert">
+            <TimerIcon />
+            <span>Playing 11 can only be edited on Saturday, or Sunday</span>
+          </div>
+        )}
+
+        {!isOwner && (
+          <div className="owner-alert">
+            <LockIcon />
+            <span>Only team owners can edit Playing 11</span>
+          </div>
+        )}
+
+        {selectedPlayers.length === 0 ? (
+          <div className="empty-content">
+            <EmojiEventsIcon className="empty-icon" />
+            <h3>No Playing 11 Selected</h3>
+            <p>
+              {isOwner
+                ? "Click 'Edit Team' to choose your playing 11"
+                : "Team owner hasn't selected playing 11 yet"}
+            </p>
+          </div>
+        ) : (
+          <div className="p11-selected">
+            <h3>Selected Team ({selectedPlayers.length}/11)</h3>
+            <div className="players-grid">
+              {selectedPlayers.map(p => renderPlayerCard(p, false))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render edit modal
+  const renderEditModal = () => {
+    if (!editingPlaying11) return null;
+
+    const validationErrors = validatePlaying11(draftPlaying11Ids);
+
+    return (
+      <motion.div
+        className="modal-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setEditingPlaying11(false)}
+      >
+        <motion.div
+          className="edit-modal"
+          initial={{ scale: 0.9, y: 50 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 50 }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <h2><EditIcon /> Select Playing 11</h2>
+            <button onClick={() => setEditingPlaying11(false)}>
+              <CloseIcon />
+            </button>
+          </div>
+
+          <div className="selection-status">
+            <div className="status-text">
+              <span>Selected:</span>
+              <strong>{draftPlaying11Ids.length}/11</strong>
+            </div>
+            <div className="status-bar">
+              <div
+                className="status-fill"
+                style={{
+                  width: `${(draftPlaying11Ids.length / 11) * 100}%`,
+                  backgroundColor: draftPlaying11Ids.length === 11 ? '#22c55e' : '#3b82f6'
+                }}
+              />
+            </div>
+          </div>
+
+          {validationErrors.length > 0 && (
+            <div className="validation-box">
+              <h4><ErrorOutlineIcon /> Issues:</h4>
+              <ul>
+                {validationErrors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="modal-content">
+            <div className="selectable-players">
+              {allSquadPlayers.map(player => {
+                const isSelected = draftPlaying11Ids.some(id => id === player.id);
+                const isOverseas = selectedAuction?.is_ipl_auction &&
+                  player.country &&
+                  player.country.toLowerCase() !== "india";
+
+                return (
+                  <motion.div
+                    key={player.id}
+                    className={`selectable-card ${isSelected ? 'selected' : ''}`}
+                    onClick={() => togglePlayerInDraft(player.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="select-indicator">
+                      {isSelected ? <CheckCircleIcon /> : <AddCircleIcon />}
+                    </div>
+
+                    <div className="selectable-content">
+                      <div className="selectable-top">
+                        <div>
+                          <h4>{player.player_name}</h4>
+                          <span className="role-badge">{player.role}</span>
+                        </div>
+                        <div className="role-icon-lg">
+                          {getRoleIcon(player.role)}
+                        </div>
+                      </div>
+
+                      <div className="selectable-info">
+                        <span>₹{(player.base_price || 0).toFixed(1)} Cr</span>
+                        {isOverseas && (
+                          <span className="overseas-tag">
+                            <FlightIcon fontSize="small" /> {player.country}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="modal-footer">
+            <button
+              className="btn-cancel"
+              onClick={() => setEditingPlaying11(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-save"
+              onClick={savePlaying11}
+              disabled={saving || validationErrors.length > 0}
+            >
+              {saving ? (
+                <>
+                  <div className="spinner" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <SaveIcon />
+                  Save Team
+                </>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
+  // Main render
   if (loading && !selectedAuction) {
     return (
-      <div className="squad-container">
-        <div className="squad-loading-state">
-          <div className="squad-hammer-container">
-            <GavelIcon className="squad-hammer-icon" />
-            <div className="squad-impact" />
-          </div>
-          <p>Loading auctions...</p>
+      <div className="squads-page">
+        <div className="loading-screen">
+          <GavelIcon className="loading-icon" />
+          <p>Loading...</p>
         </div>
       </div>
     );
   }
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.5 } },
-    exit: { opacity: 0 },
-  };
-
-  const totalPlayers =
-    (squadPlayers.batters?.length || 0) +
-    (squadPlayers.bowlers?.length || 0) +
-    (squadPlayers.all_rounders?.length || 0) +
-    (squadPlayers.wicket_keepers?.length || 0);
-
-  const totalSellingPrice = calculateTotalSellingPrice();
-  const remainingPurse = 100.0 - totalSellingPrice;
+  const stats = selectedTeam ? calculateStats() : null;
 
   return (
     <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      className="squad-container"
+      className="squads-page"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
-      {/* Auction & Team Selection */}
-      <div className="squad-selection-section">
-        <div className="squad-dropdown-wrapper">
+      <div className="page-header">
+        <div className="selectors">
           <select
             value={selectedAuction?.id || ""}
-            onChange={(e) => handleAuctionSelect(e.target.value)}
-            className="squad-dropdown"
-            disabled={loading}
+            onChange={e => handleSelectAuction(e.target.value)}
+            className="selector-dropdown"
           >
-            <option value="">Select an Auction</option>
-            {auctions.map((auction) => (
-              <option key={auction.id} value={auction.id}>
-                {auction.auction_name}
-              </option>
+            <option value="">Choose Auction</option>
+            {auctions.map(a => (
+              <option key={a.id} value={a.id}>{a.auction_name}</option>
             ))}
           </select>
 
           {selectedAuction && (
             <select
               value={selectedTeam?.id || ""}
-              onChange={(e) => handleTeamSelect(e.target.value)}
-              className="squad-dropdown"
-              disabled={loading}
+              onChange={e => handleSelectTeam(e.target.value)}
+              className="selector-dropdown"
             >
-              <option value="">Select a Team</option>
-              {teams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.team_name}
-                </option>
+              <option value="">Choose Team</option>
+              {teams.map(t => (
+                <option key={t.id} value={t.id}>{t.team_name}</option>
               ))}
             </select>
           )}
         </div>
       </div>
 
-      {auctions.length === 0 ? (
-        <div className="squad-empty-state">
-          <GavelIcon className="squad-empty-icon" />
-          <h3>No Auctions Found</h3>
-          <p>You haven't created or joined any auctions yet.</p>
-        </div>
-      ) : !selectedAuction ? (
-        <div className="squad-empty-state">
-          <GavelIcon className="squad-empty-icon" />
+      {!selectedAuction ? (
+        <div className="empty-content">
+          <GavelIcon className="empty-icon" />
           <h3>Select an Auction</h3>
-          <p>Choose an auction from the dropdown to view its teams.</p>
+          <p>Choose an auction to view squads</p>
         </div>
       ) : !selectedTeam ? (
-        <div className="squad-empty-state">
-          <GroupsIcon className="squad-empty-icon" />
+        <div className="empty-content">
+          <GroupsIcon className="empty-icon" />
           <h3>Select a Team</h3>
-          <p>Choose a team to view their squad.</p>
+          <p>Choose a team to view their squad</p>
         </div>
       ) : (
-        <div className="squad-content">
-          {/* Squad Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="squad-header-card"
-          >
-            <div className="squad-team-info">
-              <h2 className="squad-team-name">{selectedTeam.team_name}</h2>
-              <div className="squad-stats">
-                <p className="squad-team-count">
-                  Total Players: <strong>{totalPlayers}</strong>
-                </p>
-                <p className="squad-team-count">
-                  Total Spent:{" "}
-                  <strong>₹{totalSellingPrice.toFixed(2)} Cr</strong>
-                </p>
-                <p className="squad-team-count">
-                  Remaining Purse:{" "}
-                  <strong>₹{remainingPurse.toFixed(2)} Cr</strong>
-                </p>
+        <>
+          <div className="team-info-bar">
+            <div className="team-name">
+              <h2>{selectedTeam.team_name}</h2>
+              {selectedAuction.is_ipl_auction && (
+                <div className="view-switcher">
+                  <button
+                    className={currentView === "squad" ? "active" : ""}
+                    onClick={() => setCurrentView("squad")}
+                  >
+                    <GroupsIcon /> Squad
+                  </button>
+                  <button
+                    className={currentView === "playing11" ? "active" : ""}
+                    onClick={() => setCurrentView("playing11")}
+                  >
+                    <EmojiEventsIcon /> Playing 11
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="stats-row">
+              <div className="stat-box">
+                <PeopleIcon />
+                <div>
+                  <span className="stat-label">Players</span>
+                  <span className="stat-value">{stats.totalPlayers}</span>
+                </div>
+              </div>
+              <div className="stat-box">
+                <AccountBalanceWalletIcon />
+                <div>
+                  <span className="stat-label">Spent</span>
+                  <span className="stat-value">₹{stats.totalSpent.toFixed(1)} Cr</span>
+                </div>
+              </div>
+              <div className="stat-box">
+                <AccountBalanceWalletIcon />
+                <div>
+                  <span className="stat-label">Remaining</span>
+                  <span className="stat-value">₹{stats.remaining.toFixed(1)} Cr</span>
+                </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Squad Sections */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="squad-sections-container"
-          >
+          <div className="main-content">
             {loading ? (
-              <div className="squad-loading-state">
-                <div className="squad-hammer-container">
-                  <GavelIcon className="squad-hammer-icon" />
-                  <div className="squad-impact" />
-                </div>
-                <p>Loading squad...</p>
+              <div className="loading-screen">
+                <GavelIcon className="loading-icon" />
+                <p>Loading...</p>
               </div>
-            ) : totalPlayers === 0 ? (
-              <div className="squad-no-players-state">
-                <SportsIcon className="squad-no-players-icon" />
-                <p>No players in this squad yet</p>
-              </div>
+            ) : currentView === "squad" ? (
+              renderSquadView()
             ) : (
-              <>
-                {renderSquadSection(
-                  "Batters",
-                  squadPlayers.batters,
-                  <GiCricketBat />
-                )}
-                {renderSquadSection(
-                  "Bowlers",
-                  squadPlayers.bowlers,
-                  <BiSolidCricketBall />
-                )}
-                {renderSquadSection(
-                  "All-Rounders",
-                  squadPlayers.all_rounders,
-                  <SportsCricketIcon />
-                )}
-                {renderSquadSection(
-                  "Wicket-Keepers",
-                  squadPlayers.wicket_keepers,
-                  <GiWinterGloves />
-                )}
-              </>
+              renderPlaying11View()
             )}
-          </motion.div>
-        </div>
+          </div>
+        </>
       )}
 
-      {/* Player Detail Modal */}
+      {/* Player detail modal */}
       <AnimatePresence>
-        {selectedPlayer && (
-          <div
-            className="squad-modal-overlay"
-            onClick={() => setSelectedPlayer(null)}
+        {selectedPlayerForDetail && (
+          <motion.div
+            className="modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSelectedPlayerForDetail(null)}
           >
             <motion.div
-              className="squad-player-detail-modal"
-              onClick={(e) => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
+              className="detail-modal"
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              onClick={e => e.stopPropagation()}
             >
-              <button
-                className="squad-modal-close-button"
-                onClick={() => setSelectedPlayer(null)}
-              >
-                <CloseIcon />
-              </button>
+              <div className="modal-header">
+                <h2>Player Details</h2>
+                <button onClick={() => setSelectedPlayerForDetail(null)}>
+                  <CloseIcon />
+                </button>
+              </div>
 
-              <h2>Player Details</h2>
-
-              <div className="squad-player-detail-content">
-                <div className="squad-detail-section">
-                  <div className="squad-detail-row">
-                    <span className="squad-detail-label">Player Number:</span>
-                    <span className="squad-detail-value">
-                      {selectedPlayer.player_number || "N/A"}
-                    </span>
-                  </div>
-                  <div className="squad-detail-row">
-                    <span className="squad-detail-label">Name:</span>
-                    <span className="squad-detail-value">
-                      {selectedPlayer.player_name}
-                    </span>
-                  </div>
-                  <div className="squad-detail-row">
-                    <span className="squad-detail-label">Role:</span>
-                    <span className="squad-detail-value">
-                      {selectedPlayer.role || "N/A"}
-                    </span>
-                  </div>
-                  {selectedAuction?.is_ipl_auction && (
-                    <>
-                      <div className="squad-detail-row">
-                        <span className="squad-detail-label">Country:</span>
-                        <span className="squad-detail-value">
-                          {selectedPlayer.country || "N/A"}
-                        </span>
-                      </div>
-                      <div className="squad-detail-row">
-                        <span className="squad-detail-label">IPL Team:</span>
-                        <span className="squad-detail-value">
-                          {selectedPlayer.ipl_team || "N/A"}
-                        </span>
-                      </div>
-                      <div className="squad-detail-row">
-                        <span className="squad-detail-label">
-                          Previous Fantasy Points:
-                        </span>
-                        <span className="squad-detail-value">
-                          {selectedPlayer.prev_fantasy_points || 0}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  <div className="squad-detail-row">
-                    <span className="squad-detail-label">Previous Team:</span>
-                    <span className="squad-detail-value">
-                      {selectedPlayer.prev_team || "N/A"}
-                    </span>
-                  </div>
-                  <div className="squad-detail-row">
-                    <span className="squad-detail-label">Current Team:</span>
-                    <span className="squad-detail-value">
-                      {selectedPlayer.current_team || "Not Assigned"}
-                    </span>
-                  </div>
-                  <div className="squad-detail-row">
-                    <span className="squad-detail-label">Base Price:</span>
-                    <span className="squad-detail-value">
-                      ₹{(selectedPlayer.base_price || 0).toLocaleString()} Cr
-                    </span>
-                  </div>
-                  <div className="squad-detail-row">
-                    <span className="squad-detail-label">Selling Price:</span>
-                    <span className="squad-detail-value">
-                      {selectedPlayer.selling_price
-                        ? `₹${selectedPlayer.selling_price.toLocaleString()} Cr`
-                        : "Not Sold"}
-                    </span>
-                  </div>
-                  <div className="squad-detail-row">
-                    <span className="squad-detail-label">Status:</span>
-                    <span
-                      className={`squad-detail-value squad-status-badge squad-status-${
-                        selectedPlayer.hammer || "unsold"
-                      }`}
-                    >
-                      {selectedPlayer.hammer || "Unsold"}
-                    </span>
-                  </div>
+              <div className="detail-grid">
+                <div className="detail-row">
+                  <span className="detail-label">Player Number:</span>
+                  <span className="detail-value">{selectedPlayerForDetail.player_number || "N/A"}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Name:</span>
+                  <span className="detail-value">{selectedPlayerForDetail.player_name}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Role:</span>
+                  <span className="detail-value">{selectedPlayerForDetail.role || "N/A"}</span>
+                </div>
+                {selectedAuction?.is_ipl_auction && (
+                  <>
+                    <div className="detail-row">
+                      <span className="detail-label">Country:</span>
+                      <span className="detail-value">{selectedPlayerForDetail.country || "N/A"}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">IPL Team:</span>
+                      <span className="detail-value">{selectedPlayerForDetail.ipl_team || "N/A"}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Fantasy Points:</span>
+                      <span className="detail-value">{selectedPlayerForDetail.prev_fantasy_points || 0}</span>
+                    </div>
+                  </>
+                )}
+                <div className="detail-row">
+                  <span className="detail-label">Previous Team:</span>
+                  <span className="detail-value">{selectedPlayerForDetail.prev_team || "N/A"}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Current Team:</span>
+                  <span className="detail-value">{selectedTeam?.team_name || "Not Assigned"}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Base Price:</span>
+                  <span className="detail-value">₹{(selectedPlayerForDetail.base_price || 0).toLocaleString()} Cr</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Selling Price:</span>
+                  <span className="detail-value">
+                    {selectedPlayerForDetail.selling_price
+                      ? `₹${selectedPlayerForDetail.selling_price.toLocaleString()} Cr`
+                      : "Not Sold"}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Status:</span>
+                  <span className={`detail-value status-${selectedPlayerForDetail.hammer || "unsold"}`}>
+                    {selectedPlayerForDetail.hammer || "Unsold"}
+                  </span>
                 </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Edit playing 11 modal */}
+      <AnimatePresence>
+        {renderEditModal()}
       </AnimatePresence>
     </motion.div>
   );

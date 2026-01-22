@@ -1,5 +1,5 @@
 /* Main Container */
-.squad-container {
+.squads-page {
     width: 100%;
     min-height: 93vh;
     margin: 0;
@@ -7,28 +7,50 @@
     background-color: #f5f7fa;
 }
 
-/* Squad Selection Section */
-.squad-container .squad-selection-section {
-    max-width: 1200px;
-    margin: 0 auto 20px auto;
+/* Loading Screen */
+.squads-page .loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 20px;
 }
 
-.squad-container .squad-selection-section .squad-dropdown-wrapper {
+.squads-page .loading-screen .loading-icon {
+    font-size: 64px;
+    color: #0d2249;
+    animation: hammer-swing 1s ease-in-out infinite;
+}
+
+.squads-page .loading-screen p {
+    font-size: 18px;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Page Header */
+.squads-page .page-header {
+    max-width: 1200px;
+    margin: 0 auto 20px auto;
     background: white;
-    border-radius: 12px;
-    padding: 15px 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.squads-page .page-header .selectors {
     display: flex;
     gap: 15px;
     flex-wrap: wrap;
 }
 
-.squad-container .squad-selection-section .squad-dropdown {
+.squads-page .page-header .selector-dropdown {
     flex: 1;
     min-width: 250px;
-    padding: 12px 16px;
+    padding: 14px 18px;
     border: 2px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 16px;
     color: #0d2249;
     background: #f8f9fa;
@@ -37,145 +59,226 @@
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%230d2249' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 16px;
-    padding-right: 40px;
+    background-position: right 15px center;
+    background-size: 18px;
+    padding-right: 45px;
+    font-weight: 500;
 }
 
-.squad-container .squad-selection-section .squad-dropdown:focus {
+.squads-page .page-header .selector-dropdown:focus {
     outline: none;
     border-color: #0d2249;
     box-shadow: 0 0 0 3px rgba(13, 34, 73, 0.1);
+    background: white;
 }
 
-.squad-container .squad-selection-section .squad-dropdown:hover {
+.squads-page .page-header .selector-dropdown:hover {
     border-color: #0d2249;
     background: white;
 }
 
-/* Squad Content */
-.squad-container .squad-content {
+/* Empty Content State */
+.squads-page .empty-content {
     max-width: 1200px;
     margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+  padding: 60px 40px;
+    text-align: center;
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); */
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 20px;
 }
 
-/* Squad Header Card */
-.squad-container .squad-header-card {
+.squads-page .empty-content .empty-icon {
+    font-size: 80px;
+    color: #ddd;
+}
+
+.squads-page .empty-content h3 {
+    margin: 0;
+    color: #0d2249;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.squads-page .empty-content p {
+    margin: 0;
+    color: #666;
+    font-size: 16px;
+}
+
+/* Team Info Bar */
+.squads-page .team-info-bar {
+    max-width: 1200px;
+    margin: 0 auto 20px auto;
+    background: white;
+    border-radius: 20px;
+    padding: 25px 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eee;
+}
+
+.squads-page .team-info-bar .team-name {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.squads-page .team-info-bar .team-name h2 {
+    margin: 0;
+    color: #0d2249;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* View Switcher */
+.squads-page .view-switcher {
+    display: flex;
+    gap: 10px;
+    background: #f8f9fa;
+    padding: 5px;
+    border-radius: 12px;
+}
+
+.squads-page .view-switcher button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: #666;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.squads-page .view-switcher button:hover {
+    background: rgba(13, 34, 73, 0.1);
+    color: #0d2249;
+}
+
+.squads-page .view-switcher button.active {
+    background: #0d2249;
+    color: white;
+}
+
+.squads-page .view-switcher button svg {
+    font-size: 20px;
+}
+
+/* Stats Row */
+.squads-page .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.squads-page .stat-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.squads-page .stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 34, 73, 0.1);
+}
+
+.squads-page .stat-box svg {
+    font-size: 32px;
+    color: #0d2249;
+}
+
+.squads-page .stat-box > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.squads-page .stat-box .stat-label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.squads-page .stat-box .stat-value {
+    font-size: 20px;
+    color: #0d2249;
+    font-weight: 700;
+}
+
+/* Main Content */
+.squads-page .main-content {
+    max-width: 1200px;
+    margin: 0 auto;
     background: white;
     border-radius: 20px;
     padding: 30px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border: 1px solid #eee;
-    transition: all 0.3s ease;
+    min-height: 500px;
 }
 
-.squad-container .squad-header-card:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-}
-
-.squad-container .squad-header-card .squad-team-info {
+/* Squad View */
+.squads-page .squad-view {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    align-items: center;
-    text-align: center;
+    gap: 35px;
 }
 
-.squad-container .squad-header-card .squad-team-name {
-    margin: 0;
-    color: #0d2249;
-    font-size: 32px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #0d2249 0%, #1a3a6b 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.squad-container .squad-header-card .squad-team-count {
-    margin: 0;
-    color: #666;
-    font-size: 18px;
-    font-weight: 400;
-}
-
-.squad-container .squad-header-card .squad-team-count strong {
-    color: #0d2249;
-    font-weight: 700;
-    font-size: 20px;
-}
-
-/* Squad Sections Container */
-.squad-container .squad-sections-container {
+.squads-page .role-section {
     display: flex;
     flex-direction: column;
-    gap: 25px;
-}
-
-/* Squad Section */
-.squad-container .squad-section {
-    background: white;
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border: 1px solid #eee;
-    transition: all 0.3s ease;
-}
-
-.squad-container .squad-section:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.squad-container .squad-section .squad-section-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #f1f3f4;
-}
-
-.squad-container .squad-section .squad-section-icon {
-    background: linear-gradient(135deg, #0d2249 0%, #1a3a6b 100%);
-    color: white;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 4px 8px rgba(13, 34, 73, 0.2);
-    animation: pulse-icon 2s ease-in-out infinite;
-}
-
-.squad-container .squad-section .squad-section-icon svg {
-    font-size: 24px;
-}
-
-.squad-container .squad-section .squad-section-title {
-    margin: 0;
-    color: #0d2249;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-/* Squad Players Grid */
-.squad-container .squad-players-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
 }
 
-/* Squad Player Card */
-.squad-container .squad-player-card {
+.squads-page .role-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.squads-page .role-header .role-icon {
+    font-size: 32px;
+    color: #0d2249;
+}
+
+.squads-page .role-header h3 {
+    margin: 0;
+    color: #0d2249;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* Players Grid */
+.squads-page .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* Player Card */
+.squads-page .player-card {
     background: white;
-    border-radius: 16px;
     border: 2px solid #f1f3f4;
+    border-radius: 16px;
     padding: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -183,229 +286,291 @@
     overflow: hidden;
 }
 
-.squad-container .squad-player-card::before {
+.squads-page .player-card::before {
     content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(13, 34, 73, 0.05), transparent);
-    transition: left 0.5s ease;
-}
-
-.squad-container .squad-player-card:hover::before {
-    left: 100%;
-}
-
-.squad-container .squad-player-card:hover {
-    border-color: #0d2249;
-    box-shadow: 0 8px 16px rgba(13, 34, 73, 0.2);
-    transform: translateY(-4px);
-}
-
-.squad-container .squad-player-card .squad-player-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 15px;
-}
-
-.squad-container .squad-player-card .squad-player-name-section {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-}
-
-.squad-container .squad-player-card .squad-player-name {
-    margin: 0;
-    color: #0d2249;
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-.squad-container .squad-player-card .squad-role-icon {
-    background: linear-gradient(135deg, #0d2249 0%, #1a3a6b 100%);
-    color: white;
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 2px 4px rgba(13, 34, 73, 0.3);
-    animation: rotate-icon 3s linear infinite;
-}
-
-.squad-container .squad-player-card .squad-role-icon svg {
-    font-size: 18px;
-}
-
-.squad-container .squad-player-card .squad-overseas-icon {
-    color: #0d2249;
-    font-size: 20px;
-    position: relative;
-    animation: bounce-icon 2s ease-in-out infinite;
-}
-
-.squad-container .squad-player-card .squad-player-info {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.squad-container .squad-player-card .squad-info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    transition: all 0.3s ease;
-}
-
-.squad-container .squad-player-card .squad-info-row:hover {
-    background: white;
-    border-color: #0d2249;
-    transform: translateX(5px);
-}
-
-.squad-container .squad-player-card .squad-info-row:last-child {
-    border-bottom: none;
-}
-
-.squad-container .squad-player-card .squad-info-label {
-    font-size: 14px;
-    color: #666;
-    font-weight: 500;
-}
-
-.squad-container .squad-player-card .squad-info-value {
-    font-size: 14px;
-    color: #0d2249;
-    font-weight: 600;
-}
-
-/* Empty State */
-.squad-container .squad-empty-state {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 20px;
-    padding: 60px;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
-.squad-container .squad-empty-state .squad-empty-icon {
-    font-size: 80px;
-    color: #ddd;
-    animation: float-icon 3s ease-in-out infinite;
-}
-
-.squad-container .squad-empty-state h3 {
-    margin: 0;
-    color: #0d2249;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-.squad-container .squad-empty-state p {
-    margin: 0;
-    color: #666;
-    font-size: 16px;
-}
-
-/* No Players State */
-.squad-container .squad-no-players-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #666;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
-.squad-container .squad-no-players-state .squad-no-players-icon {
-    font-size: 64px;
-    color: #ddd;
-    animation: float-icon 3s ease-in-out infinite;
-}
-
-.squad-container .squad-no-players-state p {
-    font-size: 18px;
-    margin: 0;
-}
-
-/* Loading State */
-.squad-container .squad-loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    gap: 20px;
-    color: #666;
-}
-
-.squad-container .squad-loading-state .squad-hammer-container {
-    position: relative;
-    width: 50px;
-    height: 50px;
-    transform-origin: 80% 80%;
-    animation: hammer-swing 1s ease-in-out infinite;
-}
-
-.squad-container .squad-loading-state .squad-hammer-container .squad-hammer-icon {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    color: #0d2249;
-    transform-origin: 80% 80%;
+    height: 4px;
+    background: linear-gradient(90deg, #0d2249 0%, #1e3a5f 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
 }
 
-.squad-container .squad-loading-state .squad-hammer-container .squad-impact {
+.squads-page .player-card:hover {
+    border-color: #0d2249;
+    box-shadow: 0 8px 20px rgba(13, 34, 73, 0.15);
+    transform: translateY(-4px);
+}
+
+.squads-page .player-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* P11 Badge */
+.squads-page .player-card .p11-badge {
     position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 25px;
-    height: 25px;
-    background: rgba(13, 34, 73, 0.2);
-    border-radius: 50%;
-    opacity: 0;
-    animation: impact 1s ease-in-out infinite;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    letter-spacing: 0.5px;
 }
 
-/* Modal Styles */
-.squad-container .squad-modal-overlay {
+.squads-page .player-card .p11-badge svg {
+    font-size: 14px;
+}
+
+/* Player Card Content */
+.squads-page .player-card .player-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.squads-page .player-card .player-name-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.squads-page .player-card .player-name-section h4 {
+    margin: 0;
+    color: #0d2249;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.squads-page .player-card .player-role {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.squads-page .player-card .player-role-icon {
+    background: #0d2249;
+    color: white;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 22px;
+}
+
+/* Player Card Info */
+.squads-page .player-card .player-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.squads-page .player-card .info-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f3f4;
+    font-size: 14px;
+}
+
+.squads-page .player-card .info-line:last-child {
+    border-bottom: none;
+}
+
+.squads-page .player-card .info-line span:first-child {
+    color: #666;
+    font-weight: 500;
+}
+
+.squads-page .player-card .info-line span:last-child {
+    color: #0d2249;
+    font-weight: 600;
+}
+
+.squads-page .player-card .country-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.squads-page .player-card .country-info svg {
+    font-size: 16px;
+    color: #f59e0b;
+}
+
+/* Playing 11 View */
+.squads-page .playing11-view {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.squads-page .p11-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.squads-page .p11-title h2 {
+    margin: 0 0 8px 0;
+    color: #0d2249;
+    font-size: 26px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.squads-page .p11-title h2 svg {
+    color: #f59e0b;
+    font-size: 30px;
+}
+
+.squads-page .p11-title p {
+    margin: 0;
+    color: #666;
+    font-size: 15px;
+}
+
+.squads-page .edit-p11-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: #0d2249;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.squads-page .edit-p11-btn:hover:not(:disabled) {
+    background: #0a1a36;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(13, 34, 73, 0.3);
+}
+
+.squads-page .edit-p11-btn:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.squads-page .edit-p11-btn svg {
+    font-size: 20px;
+}
+
+/* Alert Boxes */
+.squads-page .weekend-alert,
+.squads-page .owner-alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 12px;
+    color: #92400e;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.squads-page .owner-alert {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.squads-page .weekend-alert svg,
+.squads-page .owner-alert svg {
+    font-size: 22px;
+}
+
+/* Rules Box */
+.squads-page .rules-box {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #93c5fd;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.squads-page .rules-box h4 {
+    margin: 0 0 15px 0;
+    color: #0d2249;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.squads-page .rules-box h4 svg {
+    color: #3b82f6;
+    font-size: 20px;
+}
+
+.squads-page .rules-box ul {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.squads-page .rules-box li {
+    color: #1e40af;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* P11 Selected */
+.squads-page .p11-selected h3 {
+    margin: 0 0 20px 0;
+    color: #0d2249;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+/* Modal Backdrop */
+.squads-page .modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1100;
-    backdrop-filter: blur(3px);
-    animation: fadeIn 0.3s ease;
+    backdrop-filter: blur(4px);
+    padding: 20px;
 }
 
-/* Player Detail Modal */
-.squad-container .squad-modal-overlay .squad-player-detail-modal {
+/* Detail Modal */
+.squads-page .detail-modal {
     background: white;
     border-radius: 20px;
     width: 90%;
@@ -414,21 +579,28 @@
     position: relative;
     max-height: 90vh;
     overflow-y: auto;
-    animation: slideUp 0.3s ease;
 }
 
-.squad-container .squad-modal-overlay .squad-player-detail-modal h2 {
-    margin: 10px 0 25px 0;
+.squads-page .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.squads-page .modal-header h2 {
+    margin: 0;
     color: #0d2249;
     font-size: 24px;
-    text-align: center;
-    font-weight: 600;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.squad-container .squad-modal-overlay .squad-modal-close-button {
-    position: absolute;
-    top: 15px;
-    right: 15px;
+.squads-page .modal-header button {
     background: none;
     border: none;
     cursor: pointer;
@@ -436,300 +608,680 @@
     padding: 8px;
     border-radius: 50%;
     transition: all 0.3s ease;
-}
-
-.squad-container .squad-modal-overlay .squad-modal-close-button:hover {
-    color: #0d2249;
-    background: rgba(13, 34, 73, 0.1);
-    transform: rotate(90deg);
-}
-
-.squad-container .squad-modal-overlay .squad-player-detail-content {
     display: flex;
-    flex-direction: column;
-    gap: 25px;
+    align-items: center;
+    justify-content: center;
 }
 
-.squad-container .squad-modal-overlay .squad-detail-section {
+.squads-page .modal-header button:hover {
+    background: rgba(13, 34, 73, 0.1);
+    color: #0d2249;
+}
+
+.squads-page .modal-header button svg {
+    font-size: 24px;
+}
+
+/* Detail Grid */
+.squads-page .detail-grid {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-.squad-container .squad-modal-overlay .squad-detail-row {
+.squads-page .detail-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
+    padding: 15px;
     background: #f8f9fa;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid #e5e7eb;
     transition: all 0.3s ease;
-    animation: slideIn 0.3s ease backwards;
 }
 
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(1) { animation-delay: 0.05s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(2) { animation-delay: 0.1s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(3) { animation-delay: 0.15s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(4) { animation-delay: 0.2s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(5) { animation-delay: 0.25s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(6) { animation-delay: 0.3s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(7) { animation-delay: 0.35s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(8) { animation-delay: 0.4s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(9) { animation-delay: 0.45s; }
-.squad-container .squad-modal-overlay .squad-detail-row:nth-child(10) { animation-delay: 0.5s; }
-
-.squad-container .squad-modal-overlay .squad-detail-row:hover {
-    background: white;
+.squads-page .detail-row:hover {
+    background: #e9ecef;
     border-color: #0d2249;
-    transform: translateX(5px);
-    box-shadow: 0 2px 4px rgba(13, 34, 73, 0.1);
 }
 
-.squad-container .squad-modal-overlay .squad-detail-label {
+.squads-page .detail-label {
     font-size: 14px;
+    color: #666;
+    font-weight: 600;
+}
+
+.squads-page .detail-value {
+    font-size: 14px;
+    color: #0d2249;
+    font-weight: 700;
+    text-align: right;
+}
+
+.squads-page .detail-value.status-sold {
+    color: #16a34a;
+}
+
+.squads-page .detail-value.status-unsold {
+    color: #dc2626;
+}
+
+.squads-page .detail-value.status-upcoming {
+    color: #f59e0b;
+}
+
+/* Edit Modal */
+.squads-page .edit-modal {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 900px;
+    padding: 30px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Selection Status */
+.squads-page .selection-status {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.squads-page .selection-status .status-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 15px;
+}
+
+.squads-page .selection-status .status-text span:first-child {
     color: #666;
     font-weight: 500;
 }
 
-.squad-container .squad-modal-overlay .squad-detail-value {
+.squads-page .selection-status .status-text strong {
+    color: #0d2249;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.squads-page .status-bar {
+    width: 100%;
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.squads-page .status-fill {
+    height: 100%;
+    transition: all 0.5s ease;
+    border-radius: 10px;
+}
+
+/* Validation Box */
+.squads-page .validation-box {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.squads-page .validation-box h4 {
+    margin: 0 0 12px 0;
+    color: #991b1b;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.squads-page .validation-box h4 svg {
+    font-size: 20px;
+}
+
+.squads-page .validation-box ul {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.squads-page .validation-box li {
+    color: #991b1b;
     font-size: 14px;
+    font-weight: 500;
+}
+
+/* Modal Content */
+.squads-page .modal-content {
+    margin-bottom: 25px;
+}
+
+/* Selectable Players */
+.squads-page .selectable-players {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+.squads-page .selectable-card {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.squads-page .selectable-card:hover {
+    border-color: #0d2249;
+    box-shadow: 0 4px 12px rgba(13, 34, 73, 0.1);
+    transform: translateY(-2px);
+}
+
+.squads-page .selectable-card.selected {
+    border-color: #22c55e;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.squads-page .select-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    color: #d1d5db;
+    transition: all 0.3s ease;
+}
+
+.squads-page .selectable-card.selected .select-indicator {
+    color: #22c55e;
+}
+
+.squads-page .select-indicator svg {
+    font-size: 24px;
+}
+
+/* Selectable Content */
+.squads-page .selectable-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 35px;
+}
+
+.squads-page .selectable-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.squads-page .selectable-top h4 {
+    margin: 0 0 5px 0;
+    color: #0d2249;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.squads-page .role-badge {
+    display: inline-block;
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+    background: #f3f4f6;
+    padding: 3px 10px;
+    border-radius: 12px;
+}
+
+.squads-page .role-icon-lg {
+    background: #0d2249;
+    color: white;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+}
+
+.squads-page .selectable-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.squads-page .selectable-info span:first-child {
     color: #0d2249;
     font-weight: 600;
-    text-align: right;
 }
 
-.squad-container .squad-modal-overlay .squad-status-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
+.squads-page .overseas-tag {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #f59e0b;
     font-weight: 600;
-    text-transform: uppercase;
 }
 
-.squad-container .squad-modal-overlay .squad-status-badge.squad-status-upcoming {
-    background: #fef3c7;
-    color: #92400e;
+.squads-page .overseas-tag svg {
+    font-size: 14px;
 }
 
-.squad-container .squad-modal-overlay .squad-status-badge.squad-status-sold {
-    background: #d1fae5;
-    color: #065f46;
+/* Modal Footer */
+.squads-page .modal-footer {
+    display: flex;
+    gap: 15px;
+    padding-top: 25px;
+    border-top: 2px solid #e5e7eb;
 }
 
-.squad-container .squad-modal-overlay .squad-status-badge.squad-status-unsold {
-    background: #fee2e2;
-    color: #991b1b;
+.squads-page .btn-cancel,
+.squads-page .btn-save {
+    flex: 1;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: none;
+}
+
+.squads-page .btn-cancel {
+    background: #f3f4f6;
+    color: #666;
+    border: 1px solid #d1d5db;
+}
+
+.squads-page .btn-cancel:hover {
+    background: #e5e7eb;
+    color: #333;
+}
+
+.squads-page .btn-save {
+    background: #0d2249;
+    color: white;
+}
+
+.squads-page .btn-save:hover:not(:disabled) {
+    background: #0a1a36;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(13, 34, 73, 0.3);
+}
+
+.squads-page .btn-save:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.squads-page .btn-save svg,
+.squads-page .btn-cancel svg {
+    font-size: 20px;
+}
+
+/* Spinner */
+.squads-page .spinner {
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
 }
 
 /* Animations */
 @keyframes hammer-swing {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: rotate(0deg);
     }
+
     30% {
         transform: rotate(-40deg);
     }
+
     60% {
         transform: rotate(5deg);
     }
 }
 
-@keyframes impact {
-    0%, 100% {
-        transform: translateX(-50%) scale(0);
-        opacity: 0;
-    }
-    50% {
-        transform: translateX(-50%) scale(1.5);
-        opacity: 1;
-    }
-}
-
-@keyframes pulse-icon {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 4px 8px rgba(13, 34, 73, 0.2);
-    }
-    50% {
-        transform: scale(1.05);
-        box-shadow: 0 6px 12px rgba(13, 34, 73, 0.3);
-    }
-}
-
-@keyframes rotate-icon {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
+@keyframes spin {
+    to {
         transform: rotate(360deg);
     }
 }
 
-@keyframes bounce-icon {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-5px);
-    }
+/* Scrollbar Styles */
+.squads-page .selectable-players::-webkit-scrollbar,
+.squads-page .detail-modal::-webkit-scrollbar,
+.squads-page .edit-modal::-webkit-scrollbar {
+    width: 8px;
 }
 
-@keyframes float-icon {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
+.squads-page .selectable-players::-webkit-scrollbar-track,
+.squads-page .detail-modal::-webkit-scrollbar-track,
+.squads-page .edit-modal::-webkit-scrollbar-track {
+    background: #f1f3f4;
+    border-radius: 10px;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+.squads-page .selectable-players::-webkit-scrollbar-thumb,
+.squads-page .detail-modal::-webkit-scrollbar-thumb,
+.squads-page .edit-modal::-webkit-scrollbar-thumb {
+    background: #0d2249;
+    border-radius: 10px;
 }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+.squads-page .selectable-players::-webkit-scrollbar-thumb:hover,
+.squads-page .detail-modal::-webkit-scrollbar-thumb:hover,
+.squads-page .edit-modal::-webkit-scrollbar-thumb:hover {
+    background: #0a1a36;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .squad-container {
+    .squads-page {
         padding: 10px;
     }
 
-    .squad-container .squad-selection-section .squad-dropdown-wrapper {
-        flex-direction: column;
-        gap: 10px;
+    .squads-page .page-header,
+    .squads-page .team-info-bar,
+    .squads-page .main-content {
+        padding: 20px;
     }
 
-    .squad-container .squad-selection-section .squad-dropdown {
+    .squads-page .page-header .selector-dropdown {
         min-width: 100%;
     }
 
-    .squad-container .squad-header-card {
-        padding: 20px;
+    .squads-page .team-info-bar .team-name h2 {
+        font-size: 22px;
     }
 
-    .squad-container .squad-header-card .squad-team-name {
-        font-size: 24px;
+    .squads-page .view-switcher {
+        width: 100%;
     }
 
-    .squad-container .squad-header-card .squad-team-count {
-        font-size: 16px;
+    .squads-page .view-switcher button {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 15px;
+        font-size: 14px;
     }
 
-    .squad-container .squad-section {
-        padding: 20px;
-    }
-
-    .squad-container .squad-section .squad-section-header {
-        gap: 12px;
-    }
-
-    .squad-container .squad-section .squad-section-icon {
-        width: 40px;
-        height: 40px;
-    }
-
-    .squad-container .squad-section .squad-section-icon svg {
-        font-size: 20px;
-    }
-
-    .squad-container .squad-section .squad-section-title {
-        font-size: 20px;
-    }
-
-    .squad-container .squad-players-grid {
+    .squads-page .stats-row {
         grid-template-columns: 1fr;
         gap: 15px;
     }
 
-    .squad-container .squad-modal-overlay .squad-player-detail-modal {
+    .squads-page .players-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .squads-page .role-header h3 {
+        font-size: 18px;
+    }
+
+    .squads-page .detail-modal,
+    .squads-page .edit-modal {
         width: 95%;
         padding: 20px;
         max-height: 85vh;
     }
 
-    .squad-container .squad-empty-state {
-        padding: 40px 20px;
+    .squads-page .modal-header h2 {
+        font-size: 20px;
     }
 
-    .squad-container .squad-empty-state .squad-empty-icon {
-        font-size: 60px;
+    .squads-page .selectable-players {
+        grid-template-columns: 1fr;
+        max-height: 400px;
+    }
+
+    .squads-page .modal-footer {
+        flex-direction: column;
+    }
+
+    .squads-page .btn-cancel,
+    .squads-page .btn-save {
+        width: 100%;
+    }
+
+    .squads-page .p11-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .squads-page .edit-p11-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .squads-page .p11-title h2 {
+        font-size: 22px;
+    }
+
+    .squads-page .empty-content {
+        padding: 60px 20px;
+    }
+
+    .squads-page .empty-content h3 {
+        font-size: 24px;
     }
 }
 
 @media (max-width: 480px) {
-    .squad-container .squad-header-card .squad-team-name {
-        font-size: 20px;
+    .squads-page {
+        padding: 5px;
     }
 
-    .squad-container .squad-header-card .squad-team-count {
-        font-size: 14px;
-    }
-
-    .squad-container .squad-player-card {
+    .squads-page .page-header,
+    .squads-page .team-info-bar,
+    .squads-page .main-content {
         padding: 15px;
     }
 
-    .squad-container .squad-player-card .squad-player-name {
-        font-size: 16px;
+    .squads-page .team-info-bar .team-name h2 {
+        font-size: 20px;
     }
 
-    .squad-container .squad-section .squad-section-title {
+    .squads-page .view-switcher button {
+        padding: 8px 12px;
+        font-size: 13px;
+        gap: 5px;
+    }
+
+    .squads-page .view-switcher button svg {
         font-size: 18px;
     }
 
-    .squad-container .squad-modal-overlay .squad-detail-row {
+    .squads-page .stat-box {
+        padding: 15px;
+    }
+
+    .squads-page .stat-box svg {
+        font-size: 28px;
+    }
+
+    .squads-page .stat-box .stat-value {
+        font-size: 18px;
+    }
+
+    .squads-page .player-card {
+        padding: 15px;
+    }
+
+    .squads-page .player-card .player-name-section h4 {
+        font-size: 16px;
+    }
+
+    .squads-page .player-card .player-role-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 20px;
+    }
+
+    .squads-page .detail-modal,
+    .squads-page .edit-modal {
+        padding: 15px;
+    }
+
+    .squads-page .modal-header {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+
+    .squads-page .modal-header h2 {
+        font-size: 18px;
+    }
+
+    .squads-page .detail-row {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
 
-    .squad-container .squad-modal-overlay .squad-detail-value {
+    .squads-page .detail-value {
         text-align: left;
+    }
+
+    .squads-page .selection-status {
+        padding: 15px;
+    }
+
+    .squads-page .selectable-players {
+        gap: 12px;
+        max-height: 350px;
+    }
+
+    .squads-page .selectable-card {
+        padding: 12px;
+    }
+
+    .squads-page .selectable-content {
+        padding-right: 30px;
+    }
+
+    .squads-page .selectable-top h4 {
+        font-size: 15px;
+    }
+
+    .squads-page .role-icon-lg {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+
+    .squads-page .btn-cancel,
+    .squads-page .btn-save {
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+
+    .squads-page .p11-title h2 {
+        font-size: 20px;
+    }
+
+    .squads-page .p11-title h2 svg {
+        font-size: 26px;
+    }
+
+    .squads-page .edit-p11-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    .squads-page .rules-box {
+        padding: 15px;
+    }
+
+    .squads-page .rules-box h4 {
+        font-size: 14px;
+    }
+
+    .squads-page .rules-box li {
+        font-size: 13px;
+    }
+
+    .squads-page .empty-content {
+        padding: 40px 15px;
+    }
+
+    .squads-page .empty-content .empty-icon {
+        font-size: 60px;
+    }
+
+    .squads-page .empty-content h3 {
+        font-size: 20px;
+    }
+
+    .squads-page .empty-content p {
+        font-size: 14px;
     }
 }
 
-/* Scrollbar Styling */
-.squad-container .squad-modal-overlay .squad-player-detail-modal::-webkit-scrollbar {
-    width: 8px;
+/* Landscape Mobile Optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+    .squads-page .modal-backdrop {
+        align-items: flex-start;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .squads-page .detail-modal,
+    .squads-page .edit-modal {
+        max-height: 95vh;
+        margin: 10px 0;
+    }
+
+    .squads-page .selectable-players {
+        max-height: 300px;
+    }
 }
 
-.squad-container .squad-modal-overlay .squad-player-detail-modal::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
+/* Print Styles */
+@media print {
+    .squads-page {
+        background: white;
+        padding: 0;
+    }
 
-.squad-container .squad-modal-overlay .squad-player-detail-modal::-webkit-scrollbar-thumb {
-    background: #0d2249;
-    border-radius: 10px;
-}
+    .squads-page .modal-backdrop,
+    .squads-page .edit-p11-btn,
+    .squads-page .view-switcher {
+        display: none !important;
+    }
 
-.squad-container .squad-modal-overlay .squad-player-detail-modal::-webkit-scrollbar-thumb:hover {
-    background: #0a1a36;
+    .squads-page .page-header,
+    .squads-page .team-info-bar,
+    .squads-page .main-content {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    .squads-page .player-card {
+        break-inside: avoid;
+    }
 }
