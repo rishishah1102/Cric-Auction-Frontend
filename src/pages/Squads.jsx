@@ -374,6 +374,7 @@ function Squads() {
       const res = await instance.post(
         "/players/eleven/save",
         {
+          team_id: selectedTeam.id,
           player_ids: draftPlaying11Ids
         },
         { headers: { Authorization: localStorage.getItem("auction") } }
