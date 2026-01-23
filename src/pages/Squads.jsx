@@ -371,10 +371,11 @@ function Squads() {
 
     try {
       setSaving(true);
+      const squad = allSquadPlayers.map(p => p.id);
       const res = await instance.post(
         "/players/eleven/save",
         {
-          team_id: selectedTeam.id,
+          squad: squad,
           player_ids: draftPlaying11Ids
         },
         { headers: { Authorization: localStorage.getItem("auction") } }
