@@ -22,7 +22,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import TimerIcon from "@mui/icons-material/Timer";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-// import InfoIcon from "@mui/icons-material/Info";
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import { GiCricketBat } from "react-icons/gi";
 import { BiSolidCricketBall } from "react-icons/bi";
@@ -45,11 +45,15 @@ function Squads() {
 
   // Playing 11 states
   const [savedPlaying11Ids, setSavedPlaying11Ids] = useState([]);
+  const [nextPlaying11Ids, setNextPlaying11Ids] = useState([]);
   const [editingPlaying11, setEditingPlaying11] = useState(false);
   const [draftPlaying11Ids, setDraftPlaying11Ids] = useState([]);
   const [isOwner, setIsOwner] = useState(false);
   const [canEditWeekend, setCanEditWeekend] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Playing 11 views
+  const [currentPlaying11View, setCurrentPlaying11View] = useState(true);
 
   // Check if it's weekend (Saturday, Sunday)
   const checkWeekendStatus = useCallback(() => {
@@ -157,16 +161,21 @@ function Squads() {
         { headers: { Authorization: localStorage.getItem("auction") } }
       );
 
-      if (res.status === 200 && res.data.playing11) {
+      if (res.status === 200) {
         const p11 = Array.isArray(res.data.playing11) ? res.data.playing11 : [];
+        const next11 = Array.isArray(res.data.next11) ? res.data?.next11 : [];
         // Filter out null values and convert to strings
-        const validIds = p11.map(player => player._id)  
+        const validIds = p11.map(player => player._id)
         setSavedPlaying11Ids(validIds);
+        const nextValidIds = next11.map(player => player._id);
+        setNextPlaying11Ids(nextValidIds);
       } else {
         setSavedPlaying11Ids([]);
+        setNextPlaying11Ids([]);
       }
     } catch (error) {
       setSavedPlaying11Ids([]);
+      setNextPlaying11Ids([]);
     }
   };
 
@@ -178,6 +187,7 @@ function Squads() {
       setSelectedTeam(null);
       setAllSquadPlayers([]);
       setSavedPlaying11Ids([]);
+      setNextPlaying11Ids([]);
       setCurrentView("squad");
       return;
     }
@@ -196,6 +206,7 @@ function Squads() {
         setSelectedTeam(null);
         setAllSquadPlayers([]);
         setSavedPlaying11Ids([]);
+        setNextPlaying11Ids([]);
         setCurrentView("squad");
       }
     } catch (error) {
@@ -211,6 +222,7 @@ function Squads() {
       setSelectedTeam(null);
       setAllSquadPlayers([]);
       setSavedPlaying11Ids([]);
+      setNextPlaying11Ids([]);
       setIsOwner(false);
       return;
     }
@@ -236,6 +248,7 @@ function Squads() {
     } else {
       setAllSquadPlayers([]);
       setSavedPlaying11Ids([]);
+      setNextPlaying11Ids([]);
     }
   };
 
@@ -301,7 +314,11 @@ function Squads() {
       return;
     }
 
-    setDraftPlaying11Ids([...savedPlaying11Ids]);
+    if (nextPlaying11Ids.length === 11) {
+      setDraftPlaying11Ids([...nextPlaying11Ids]);
+    } else {
+      setDraftPlaying11Ids([...savedPlaying11Ids]);
+    }
     setEditingPlaying11(true);
   };
 
@@ -383,7 +400,8 @@ function Squads() {
 
       if (res.status === 200) {
         toast.success("Playing 11 saved successfully!");
-        setSavedPlaying11Ids([...draftPlaying11Ids]);
+        setNextPlaying11Ids([...draftPlaying11Ids]);
+        setCurrentPlaying11View(false);
         setEditingPlaying11(false);
       }
     } catch (error) {
@@ -517,16 +535,40 @@ function Squads() {
 
   // Render playing 11 view
   const renderPlaying11View = () => {
-    const selectedPlayers = savedPlaying11Ids
-      .map(id => getPlayerById(id))
-      .filter(p => p);
+    var selectedPlayers = [];
+    if (currentPlaying11View) {
+      selectedPlayers = savedPlaying11Ids
+        .map(id => getPlayerById(id))
+        .filter(p => p);
+    } else {
+      selectedPlayers = nextPlaying11Ids
+        .map(id => getPlayerById(id))
+        .filter(p => p);
+    }
 
     return (
       <div className="playing11-view">
         <div className="p11-header">
           <div className="p11-title">
             <h2><EmojiEventsIcon /> Playing 11</h2>
-            <p>Your team lineup for this week</p>
+            <p>{currentPlaying11View ? "Your team lineup for this week" : "Your team lineup for the upcoming week"}</p>
+          </div>
+
+          <div className="view-switcher">
+            <button
+              className={currentPlaying11View ? "active" : ""}
+              onClick={() => setCurrentPlaying11View(true)}
+            >
+              <EmojiEventsIcon /> Current XI
+            </button>
+            <button
+              className={!currentPlaying11View ? "active" : ""}
+              onClick={() => {
+                setCurrentPlaying11View(false);
+              }}
+            >
+              <MilitaryTechIcon /> Next XI
+            </button>
           </div>
 
           {isOwner && (
@@ -786,7 +828,10 @@ function Squads() {
                   </button>
                   <button
                     className={currentView === "playing11" ? "active" : ""}
-                    onClick={() => setCurrentView("playing11")}
+                    onClick={() => {
+                      setCurrentView("playing11");
+                      setCurrentPlaying11View(true);
+                    }}
                   >
                     <EmojiEventsIcon /> Playing 11
                   </button>
