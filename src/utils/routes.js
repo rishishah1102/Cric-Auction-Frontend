@@ -5,7 +5,6 @@ import Home from '../pages/Home';
 import Profile from '../pages/Profile';
 import Players from '../pages/Players';
 import Squads from '../pages/Squads';
-import PointsTable from '../pages/PointsTable';
 
 // Icons
 import HomeIcon from '@mui/icons-material/Home';
@@ -13,7 +12,6 @@ import PersonIcon from '@mui/icons-material/Person';
 import GavelIcon from '@mui/icons-material/Gavel';
 import SportsCricketIcon from '@mui/icons-material/SportsCricket';
 import PeopleIcon from '@mui/icons-material/People';
-import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 
 const routes = [
   {
@@ -45,12 +43,6 @@ const routes = [
     name: "Squads",
     icon: PeopleIcon,
     element: <PrivateRoute element={<Squads />} headerText="Squads" />,
-  },
-  {
-    path: "/pointsTable",
-    name: "Points Table",
-    icon: ScoreboardIcon,
-    element: <PrivateRoute element={<PointsTable />} headerText="Points Table" />,
   },
 ];
 

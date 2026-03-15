@@ -48,9 +48,9 @@ function Profile() {
   useEffect(() => {
     document.title = "Profile";
 
-    if (userData !== (null || undefined) && Object.keys(userData).length !== 0) {
+    if (userData != null && Object.keys(userData).length !== 0) {
       setProfileData(userData);
-      userData.image_url !== (null || undefined) && setImageUrl(userData?.image_url);
+      if (userData.image_url) setImageUrl(userData.image_url);
     } else {
       fetchData()
     }
@@ -123,7 +123,7 @@ function Profile() {
         window.location.reload()
       }
     } catch (error) {
-      if (error.response.status === 401) {
+      if (error.response?.status === 401) {
         toast.error("Unauthorized, Please login again!");
       } else {
         toast.error("Internal Server Error!");

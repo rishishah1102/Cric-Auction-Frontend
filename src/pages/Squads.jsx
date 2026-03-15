@@ -413,14 +413,14 @@ function Squads() {
 
   // Render player card
   const renderPlayerCard = (player, showP11Badge = false) => {
-    const isInP11 = savedPlaying11Ids.some(id => id === player._id);
+    const isInP11 = savedPlaying11Ids.some(id => id === player.id || id === player._id);
     const isOverseas = selectedAuction?.is_ipl_auction &&
       player.country &&
       player.country.toLowerCase() !== "india";
 
     return (
       <motion.div
-        key={player._id}
+        key={player.id || player._id}
         className="player-card"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -715,6 +715,9 @@ function Squads() {
                           </span>
                         )}
                       </div>
+                      <div className="selectable-info">
+                        <span>IPL Team: {player.ipl_team}</span>
+                      </div>
                     </div>
                   </motion.div>
                 );
@@ -844,21 +847,21 @@ function Squads() {
                 <PeopleIcon />
                 <div>
                   <span className="stat-label">Players</span>
-                  <span className="stat-value">{stats.totalPlayers}</span>
+                  <span className="stat-value">{stats?.totalPlayers ?? 0}</span>
                 </div>
               </div>
               <div className="stat-box">
                 <AccountBalanceWalletIcon />
                 <div>
                   <span className="stat-label">Spent</span>
-                  <span className="stat-value">₹{stats.totalSpent.toFixed(1)} Cr</span>
+                  <span className="stat-value">₹{stats?.totalSpent?.toFixed(1) ?? "0.0"} Cr</span>
                 </div>
               </div>
               <div className="stat-box">
                 <AccountBalanceWalletIcon />
                 <div>
                   <span className="stat-label">Remaining</span>
-                  <span className="stat-value">₹{stats.remaining.toFixed(1)} Cr</span>
+                  <span className="stat-value">₹{stats?.remaining?.toFixed(1) ?? "0.0"} Cr</span>
                 </div>
               </div>
             </div>

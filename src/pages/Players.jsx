@@ -103,9 +103,9 @@ function Players() {
           await fetchPlayers(selected.id);
         }
       } catch (error) {
-        if (error.response.status === 400 || error.response.status === 404) {
+        if (error.response?.status === 400 || error.response?.status === 404) {
           toast.error("Invalid Auction Id");
-        } else if (error.response.status === 401) {
+        } else if (error.response?.status === 401) {
           toast.error("Please login again!");
         } else {
           toast.error("Please try again later!");
@@ -114,7 +114,7 @@ function Players() {
         setLoading(false);
       }
     },
-    [userData.email]
+    [userData?.email]
   );
 
   useEffect(() => {
@@ -430,7 +430,7 @@ function Players() {
                     className="filter-select"
                   >
                     <option value="all">All Roles</option>
-                    <option value="Batsman">Batsman</option>
+                    <option value="Batter">Batter</option>
                     <option value="Bowler">Bowler</option>
                     <option value="All-Rounder">All-Rounder</option>
                     <option value="Wicket-Keeper">Wicket-Keeper</option>
@@ -734,7 +734,7 @@ function Players() {
                         setEditData({ ...editData, role: e.target.value })
                       }
                     >
-                      <option value="Batsman">Batsman</option>
+                      <option value="Batter">Batter</option>
                       <option value="Bowler">Bowler</option>
                       <option value="All-Rounder">All-Rounder</option>
                       <option value="Wicket-Keeper">Wicket-Keeper</option>

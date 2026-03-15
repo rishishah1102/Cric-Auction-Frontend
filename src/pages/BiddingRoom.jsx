@@ -152,7 +152,7 @@ function BiddingRoom() {
         try {
             setLoading(true);
             const response = await instance.post(
-                "bidding/player/unsold",
+                "/bidding/player/unsold",
                 {
                     player_id: currentPlayer.id,
                     auction_id: auctionId

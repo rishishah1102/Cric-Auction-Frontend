@@ -21,6 +21,9 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ScoreboardIcon from '@mui/icons-material/Scoreboard';
+
+// Utils
 import { Avatar } from "@mui/material";
 import parseExcel from "../utils/parse_excel";
 import FileUpload from "../components/auction/FileUpload";
@@ -287,7 +290,7 @@ function AuctionPage() {
       if (uploadedPlayers.length !== 0) {
         const res = await instance.post(
           `/players/save?isIPLAuction=${selectedAuction.is_ipl_auction}`,
-          {"players": uploadedPlayers, "auction_id": selectedAuction.id},
+          { "players": uploadedPlayers, "auction_id": selectedAuction.id },
           {
             headers: {
               Authorization: localStorage.getItem("auction"),
@@ -572,6 +575,11 @@ function AuctionPage() {
                   </button>
                 </>
               )}
+              <button className="edit-auction-button" onClick={() => {
+                navigate('/pointsTable', { state: { auctionId: selectedAuction.id } })
+              }}>
+                <ScoreboardIcon />
+              </button>
             </div>
 
             <div className="auction-info-grid">

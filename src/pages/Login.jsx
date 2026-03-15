@@ -107,7 +107,7 @@ const Login = () => {
         navigate("/profile");
       }
     } catch (error) {
-      if (error.response.status === 401) {
+      if (error.response?.status === 401) {
         toast.error("Invalid OTP!");
       } else {
         toast.error("Internal Server Error!");
