@@ -575,11 +575,13 @@ function AuctionPage() {
                   </button>
                 </>
               )}
-              <button className="edit-auction-button" onClick={() => {
-                navigate('/pointsTable', { state: { auctionId: selectedAuction.id } })
-              }}>
-                <ScoreboardIcon />
-              </button>
+              {selectedAuction.is_ipl_auction && (
+                <button className="edit-auction-button" onClick={() => {
+                  navigate('/pointsTable', { state: { auctionId: selectedAuction.id, is_ipl_auction: selectedAuction.is_ipl_auction } })
+                }}>
+                  <ScoreboardIcon />
+                </button>
+              )}
             </div>
 
             <div className="auction-info-grid">
