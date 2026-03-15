@@ -123,12 +123,13 @@ function ConfirmDialog({ open, onClose, onConfirm, loading }) {
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function PointsTable() {
+  const navigate = useNavigate();
   const location = useLocation();
   if (!location.state?.is_ipl_auction) {
-    toast.warn("Points table is not available for this auction");
-    navigate('/auctions');
+    toast.error("Points table is not available for this auction");
+    navigate('/');
   }
-  const navigate = useNavigate();
+
   const { userData, userAuctions } = useContext(auctionContext);
 
   const [selectedId,     setSelectedId]     = useState(location.state?.auctionId || "");
