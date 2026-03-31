@@ -20,7 +20,9 @@ import CloseIcon          from "@mui/icons-material/Close";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import KeyboardArrowLeftIcon  from "@mui/icons-material/KeyboardArrowLeft";
 import GroupsIcon         from "@mui/icons-material/Groups";
-import { Avatar } from "@mui/material";
+import AutoFixHighIcon    from "@mui/icons-material/AutoFixHigh";
+import InfoOutlinedIcon   from "@mui/icons-material/InfoOutlined";
+import { Avatar, Tooltip } from "@mui/material";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MATCH_OPTIONS = Array.from({ length: 10 }, (_, i) => ({ value: i, label: `M${i + 1}` }));
@@ -86,8 +88,8 @@ function AnimNum({ value }) {
   return <>{display}</>;
 }
 
-// Confirm Dialog
-function ConfirmDialog({ open, onClose, onConfirm, loading }) {
+// Generic Confirm Dialog
+function ConfirmDialog({ open, onClose, onConfirm, loading, title, body, items, warn, confirmText }) {
   return (
     <AnimatePresence>
       {open && (
@@ -97,21 +99,18 @@ function ConfirmDialog({ open, onClose, onConfirm, loading }) {
             animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
             onClick={e => e.stopPropagation()}>
             <div className="pt-dialog-icon"><WarningAmberIcon sx={{ fontSize: 40, color: "#f59e0b" }} /></div>
-            <h3 className="pt-dialog-title">Change Playing XI?</h3>
-            <p className="pt-dialog-body">
-              This will rotate the XI for <strong>all players</strong> in this auction:
-            </p>
-            <ul className="pt-dialog-list">
-              <li>Earned/Benched/Total points → saved as previous</li>
-              <li>Match points array reset to zeros (new week)</li>
-              <li>Current XI → Previous XI, Next XI → Current XI</li>
-              <li>Next XI reset to empty</li>
-            </ul>
-            <p className="pt-dialog-warn">⚠️ This action cannot be undone.</p>
+            <h3 className="pt-dialog-title">{title}</h3>
+            {body && <p className="pt-dialog-body">{body}</p>}
+            {items && items.length > 0 && (
+              <ul className="pt-dialog-list">
+                {items.map((item, i) => <li key={i}>{item}</li>)}
+              </ul>
+            )}
+            {warn && <p className="pt-dialog-warn">{warn}</p>}
             <div className="pt-dialog-actions">
               <button className="pt-dialog-cancel" onClick={onClose} disabled={loading}>Cancel</button>
               <button className="pt-dialog-confirm" onClick={onConfirm} disabled={loading}>
-                {loading ? "Updating…" : "Yes, Change XI"}
+                {loading ? "Updating…" : confirmText}
               </button>
             </div>
           </motion.div>
@@ -148,8 +147,20 @@ export default function PointsTable() {
   const [playersLoaded, setPlayersLoaded] = useState(false);
   const [loadingPl,     setLoadingPl]     = useState(false);
   const [saving,        setSaving]        = useState(false);
-  const [showXIConfirm, setShowXIConfirm] = useState(false);
-  const [xiLoading,     setXiLoading]     = useState(false);
+  const [showXIConfirm,       setShowXIConfirm]       = useState(false);
+  const [xiLoading,           setXiLoading]           = useState(false);
+  const [showRollbackConfirm, setShowRollbackConfirm] = useState(false);
+  const [rollbackLoading,     setRollbackLoading]     = useState(false);
+  const [showResetConfirm,    setShowResetConfirm]    = useState(false);
+  const [resetLoading,        setResetLoading]        = useState(false);
+
+  // Cricbuzz integration
+  const [cricbuzzMatches,       setCricbuzzMatches]       = useState([]);
+  const [selectedCricbuzzMatch, setSelectedCricbuzzMatch] = useState(null);
+  const [fetchingCBMatches,     setFetchingCBMatches]     = useState(false);
+  const [calculatingPoints,     setCalculatingPoints]     = useState(false);
+  const [pointsBreakdown,       setPointsBreakdown]       = useState({});
+  const [unmatchedPlayers,      setUnmatchedPlayers]      = useState({ cricbuzz: [], db: [] });
 
   // Leaderboard
   const [leaderboard, setLeaderboard] = useState([]);
@@ -297,6 +308,78 @@ export default function PointsTable() {
     finally { setXiLoading(false); }
   };
 
+  // ── Rollback XI ─────────────────────────────────────────────────────────────
+  const handleRollbackXI = async () => {
+    setRollbackLoading(true);
+    try {
+      await instance.post("/points-table/rollback-xi", { auction_id: selectedId }, { headers: auth() });
+      toast.success("XI rollback successful!");
+      setShowRollbackConfirm(false);
+    } catch { toast.error("Failed to rollback XI"); }
+    finally { setRollbackLoading(false); }
+  };
+
+  // ── Reset Points ──────────────────────────────────────────────────────────
+  const handleResetPoints = async () => {
+    setResetLoading(true);
+    try {
+      await instance.post("/points-table/reset-points", { auction_id: selectedId }, { headers: auth() });
+      toast.success("All points reset to 0!");
+      setShowResetConfirm(false);
+    } catch { toast.error("Failed to reset points"); }
+    finally { setResetLoading(false); }
+  };
+
+  // ── Cricbuzz: Fetch recent IPL matches ──────────────────────────────────────
+  const fetchCricbuzzMatches = async () => {
+    setFetchingCBMatches(true);
+    try {
+      const res = await instance.get("/points-table/cricbuzz/matches", { headers: auth() });
+      if (res.status === 200) {
+        setCricbuzzMatches(res.data.matches || []);
+        // Auto-select match if teams are already chosen.
+        if (iplTeam1 && iplTeam2) {
+          const auto = (res.data.matches || []).find(m =>
+            (m.team1_sname === iplTeam1 && m.team2_sname === iplTeam2) ||
+            (m.team1_sname === iplTeam2 && m.team2_sname === iplTeam1)
+          );
+          if (auto) setSelectedCricbuzzMatch(auto);
+        }
+      }
+    } catch { toast.error("Failed to fetch Cricbuzz matches"); }
+    finally { setFetchingCBMatches(false); }
+  };
+
+  // ── Cricbuzz: Calculate fantasy points ─────────────────────────────────────
+  const calculateFromCricbuzz = async () => {
+    if (!selectedCricbuzzMatch) { toast.error("Select a Cricbuzz match first"); return; }
+    setCalculatingPoints(true);
+    try {
+      const res = await instance.post("/points-table/cricbuzz/calculate-points", {
+        auction_id: selectedId,
+        cricbuzz_match_id: selectedCricbuzzMatch.match_id,
+        ipl_team1: iplTeam1,
+        ipl_team2: iplTeam2,
+      }, { headers: auth() });
+      if (res.status === 200) {
+        const newMap = { ...pointsMap };
+        const breakdowns = {};
+        (res.data.points || []).forEach(p => {
+          newMap[p.match_id] = p.points;
+          breakdowns[p.match_id] = p.breakdown;
+        });
+        setPointsMap(newMap);
+        setPointsBreakdown(breakdowns);
+        setUnmatchedPlayers({
+          cricbuzz: res.data.unmatched_cricbuzz || [],
+          db: res.data.unmatched_db || [],
+        });
+        toast.success(`Points calculated for ${res.data.points?.length || 0} players`);
+      }
+    } catch { toast.error("Failed to calculate points from Cricbuzz"); }
+    finally { setCalculatingPoints(false); }
+  };
+
   // ── Derived ────────────────────────────────────────────────────────────────
   const team1Players = matchPlayers.filter(p => p.ipl_team === iplTeam1);
   const team2Players = matchPlayers.filter(p => p.ipl_team === iplTeam2);
@@ -315,9 +398,44 @@ export default function PointsTable() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="pt-page">
-      {/* ── Confirm Dialog ── */}
+      {/* ── Confirm Dialogs ── */}
       <ConfirmDialog open={showXIConfirm} onClose={() => setShowXIConfirm(false)}
-        onConfirm={handleChangeXI} loading={xiLoading} />
+        onConfirm={handleChangeXI} loading={xiLoading}
+        title="Change Playing XI?"
+        body={<>This will rotate the XI for <strong>all players</strong> in this auction:</>}
+        items={[
+          "Earned/Benched/Total points → saved as previous",
+          "Match points array reset to zeros (new week)",
+          "Current XI → Previous XI, Next XI → Current XI",
+          "Next XI reset to empty",
+        ]}
+        warn="⚠️ This action cannot be undone."
+        confirmText="Yes, Change XI" />
+
+      <ConfirmDialog open={showRollbackConfirm} onClose={() => setShowRollbackConfirm(false)}
+        onConfirm={handleRollbackXI} loading={rollbackLoading}
+        title="Rollback XI?"
+        body={<>This will reverse the last Change XI for <strong>all players</strong>:</>}
+        items={[
+          "Current XI → Next XI",
+          "Previous XI → Current XI",
+          "Restores previous earned/benched/total points",
+          "Match points array reset to zeros",
+        ]}
+        warn="⚠️ This action cannot be undone."
+        confirmText="Yes, Rollback XI" />
+
+      <ConfirmDialog open={showResetConfirm} onClose={() => setShowResetConfirm(false)}
+        onConfirm={handleResetPoints} loading={resetLoading}
+        title="Reset All Points?"
+        body={<>This will reset points for <strong>all players</strong> in this auction:</>}
+        items={[
+          "Earned, Benched, Total points → 0",
+          "Previous earned/benched/total → 0",
+          "Match points array reset to zeros",
+        ]}
+        warn="⚠️ This will wipe all accumulated points. Cannot be undone."
+        confirmText="Yes, Reset All Points" />
 
       {/* ── Top Bar ── */}
       <div className="pt-topbar">
@@ -589,10 +707,20 @@ export default function PointsTable() {
                 {/* Actions row */}
                 <div className="pt-ep-actions-row">
                   <h2 className="pt-section-h2">Enter Points</h2>
-                  <button className="pt-xi-btn" onClick={() => setShowXIConfirm(true)}>
-                    <SwapHorizIcon fontSize="small" />
-                    Change XI
-                  </button>
+                  <div className="pt-ep-btn-group">
+                    <button className="pt-xi-btn" onClick={() => setShowXIConfirm(true)}>
+                      <SwapHorizIcon fontSize="small" />
+                      Change XI
+                    </button>
+                    <button className="pt-xi-btn pt-rollback-btn" onClick={() => setShowRollbackConfirm(true)}>
+                      <KeyboardArrowLeftIcon fontSize="small" />
+                      Rollback XI
+                    </button>
+                    <button className="pt-xi-btn pt-reset-btn" onClick={() => setShowResetConfirm(true)}>
+                      <RefreshIcon fontSize="small" />
+                      Reset Points
+                    </button>
+                  </div>
                 </div>
 
                 {/* Config card */}
@@ -651,14 +779,82 @@ export default function PointsTable() {
                   </button>
                 </div>
 
+                {/* ── Cricbuzz Auto-Calculate Card ── */}
+                {playersLoaded && (
+                  <motion.div className="pt-cricbuzz-card"
+                    initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="pt-cricbuzz-header">
+                      <AutoFixHighIcon sx={{ color: "#16a34a", fontSize: 20 }} />
+                      <span>Auto-Calculate from Cricbuzz</span>
+                    </div>
+
+                    {cricbuzzMatches.length === 0 ? (
+                      <button className="pt-cricbuzz-fetch-btn" onClick={fetchCricbuzzMatches}
+                        disabled={fetchingCBMatches}>
+                        {fetchingCBMatches ? "Fetching…" : "Load Recent IPL Matches"}
+                      </button>
+                    ) : (
+                      <>
+                        <div className="pt-cricbuzz-matches">
+                          <label className="pt-cfg-label">Select Cricbuzz Match</label>
+                          <div className="pt-cricbuzz-match-list">
+                            {cricbuzzMatches.map(m => (
+                              <button key={m.match_id}
+                                className={`pt-cricbuzz-match-chip ${selectedCricbuzzMatch?.match_id === m.match_id ? "active" : ""}`}
+                                onClick={() => setSelectedCricbuzzMatch(
+                                  selectedCricbuzzMatch?.match_id === m.match_id ? null : m
+                                )}>
+                                <span className="pt-cb-match-teams">
+                                  {m.team1_sname} vs {m.team2_sname}
+                                </span>
+                                <span className="pt-cb-match-desc">{m.match_desc}</span>
+                                {m.team1_score && (
+                                  <span className="pt-cb-match-score">
+                                    {m.team1_score} — {m.team2_score}
+                                  </span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                          <button className="pt-cricbuzz-refresh-btn" onClick={fetchCricbuzzMatches}
+                            disabled={fetchingCBMatches}>
+                            <RefreshIcon fontSize="small" className={fetchingCBMatches ? "spinning" : ""} />
+                          </button>
+                        </div>
+
+                        <button className="pt-cricbuzz-calc-btn" onClick={calculateFromCricbuzz}
+                          disabled={calculatingPoints || !selectedCricbuzzMatch}>
+                          <AutoFixHighIcon fontSize="small" />
+                          {calculatingPoints ? "Calculating…" : "Calculate Fantasy Points"}
+                        </button>
+
+                        {(unmatchedPlayers.cricbuzz.length > 0 || unmatchedPlayers.db.length > 0) && (
+                          <div className="pt-unmatched-warn">
+                            {unmatchedPlayers.db.length > 0 && (
+                              <p><WarningAmberIcon sx={{ fontSize: 16, verticalAlign: "middle" }} />
+                                {" "}<strong>Unmatched DB players:</strong> {unmatchedPlayers.db.join(", ")}
+                              </p>
+                            )}
+                            {unmatchedPlayers.cricbuzz.length > 0 && (
+                              <p><WarningAmberIcon sx={{ fontSize: 16, verticalAlign: "middle" }} />
+                                {" "}<strong>Unmatched Cricbuzz players:</strong> {unmatchedPlayers.cricbuzz.join(", ")}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </motion.div>
+                )}
+
                 {/* Players grid */}
                 {playersLoaded && (
                   <motion.div className="pt-entry-grid"
                     initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
                     <TeamCol teamName={iplTeam1} players={team1Players} matchIndex={matchIndex}
-                      pointsMap={pointsMap} setPointsMap={setPointsMap} accentClass="pt-col-1" />
+                      pointsMap={pointsMap} setPointsMap={setPointsMap} pointsBreakdown={pointsBreakdown} accentClass="pt-col-1" />
                     <TeamCol teamName={iplTeam2} players={team2Players} matchIndex={matchIndex}
-                      pointsMap={pointsMap} setPointsMap={setPointsMap} accentClass="pt-col-2" />
+                      pointsMap={pointsMap} setPointsMap={setPointsMap} pointsBreakdown={pointsBreakdown} accentClass="pt-col-2" />
                   </motion.div>
                 )}
 
@@ -733,7 +929,7 @@ function LbStat({ label, value, color, bold }) {
 }
 
 // ─── Team Column (Enter Points) ───────────────────────────────────────────────
-function TeamCol({ teamName, players, matchIndex, pointsMap, setPointsMap, accentClass }) {
+function TeamCol({ teamName, players, matchIndex, pointsMap, setPointsMap, pointsBreakdown = {}, accentClass }) {
   return (
     <div className={`pt-team-col ${accentClass}`}>
       <div className="pt-team-col-hd">
@@ -762,12 +958,29 @@ function TeamCol({ teamName, players, matchIndex, pointsMap, setPointsMap, accen
                   <XIBadge active={p.match_data?.currentX1} />
                   {hasMatch ? (
                     <div className="pt-pts-box">
-                      <input type="number" min="0" max="999"
+                      <input type="number" min="-99" max="999"
                         className="pt-pts-input"
                         value={pointsMap[p.match_data._id] ?? 0}
                         onChange={e => setPointsMap(prev => ({ ...prev, [p.match_data._id]: e.target.value }))}
                       />
                       <span className="pt-pts-label">pts</span>
+                      {pointsBreakdown[p.match_data._id] && (
+                        <Tooltip arrow placement="left" title={
+                          <div className="pt-breakdown-tip">
+                            <div>Bat: {pointsBreakdown[p.match_data._id].batting}</div>
+                            <div>Bowl: {pointsBreakdown[p.match_data._id].bowling}</div>
+                            <div>Field: {pointsBreakdown[p.match_data._id].fielding}</div>
+                            {pointsBreakdown[p.match_data._id].bonus > 0 &&
+                              <div>Bonus: {pointsBreakdown[p.match_data._id].bonus}</div>}
+                            <hr style={{ margin: "4px 0", borderColor: "rgba(255,255,255,0.3)" }} />
+                            {(pointsBreakdown[p.match_data._id].details || []).map((d, i) =>
+                              <div key={i} style={{ fontSize: 11 }}>{d}</div>
+                            )}
+                          </div>
+                        }>
+                          <InfoOutlinedIcon sx={{ fontSize: 15, color: "#16a34a", cursor: "pointer", ml: 0.5 }} />
+                        </Tooltip>
+                      )}
                     </div>
                   ) : (
                     <span className="pt-no-rec">—</span>
