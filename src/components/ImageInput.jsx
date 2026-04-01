@@ -27,7 +27,6 @@ function ImageInput({ initialImage, onImageUpload, isEditing, imgId, size = 200 
             toast.success("Image uploaded successfully!");
         } catch (error) {
             toast.error("Failed to upload the image!");
-            console.error("Upload error:", error);
         } finally {
             setLoading(false);
         }

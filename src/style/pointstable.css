@@ -8,64 +8,6 @@
   flex-direction: column;
 }
 
-/* ── Top Bar ───────────────────────────────────────────── */
-.pt-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  background: linear-gradient(135deg, #0d2249 0%, #1a3a6b 100%);
-  box-shadow: 0 2px 16px rgba(0,0,0,0.28);
-}
-.pt-back {
-  background: rgba(255,255,255,0.13);
-  border: none;
-  border-radius: 8px;
-  padding: 7px 9px;
-  cursor: pointer;
-  color: white;
-  display: flex;
-  align-items: center;
-  transition: background 0.18s;
-  flex-shrink: 0;
-}
-.pt-back:hover { background: rgba(255,255,255,0.24); }
-
-.pt-topbar-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: white;
-  font-size: 19px;
-  font-weight: 700;
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pt-auction-pick {
-  background: rgba(255,255,255,0.13);
-  border: 1px solid rgba(255,255,255,0.26);
-  border-radius: 8px;
-  padding: 9px 34px 9px 12px;
-  color: white;
-  font-size: 13px;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  min-width: 140px;
-  max-width: 220px;
-  outline: none;
-}
-.pt-auction-pick option { background: #0d2249; }
-
 /* ── Body ──────────────────────────────────────────────── */
 .pt-body {
   max-width: 1280px;

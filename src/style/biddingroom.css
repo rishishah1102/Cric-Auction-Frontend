@@ -3,7 +3,7 @@
     width: 100%;
     min-height: 100vh;
     margin: 0;
-    padding: 0;
+    padding: 0 0 48px 0;
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
     position: relative;
     overflow-x: hidden;
@@ -27,33 +27,6 @@
     }
 
     /* Back Button */
-    .back-button {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 50px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-
-        &:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(59, 130, 246, 0.5);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(59, 130, 246, 0.4);
-        }
-    }
 
     /* Live Header */
     .live-header {
@@ -776,6 +749,28 @@
     }
 }
 
+/* Exit Pill */
+.live-exit-pill {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.live-exit-pill:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
 /* Animations */
 @keyframes fire-flicker {
 
@@ -862,13 +857,6 @@
 
 @media (max-width: 768px) {
     .bidding-container {
-        .back-button {
-            top: 15px;
-            left: 15px;
-            padding: 8px 16px;
-            font-size: 13px;
-        }
-
         .live-header {
             padding: 20px 15px 12px 15px;
 
@@ -961,12 +949,6 @@
 
 @media (max-width: 480px) {
     .bidding-container {
-        .back-button {
-            padding: 7px 14px;
-            font-size: 12px;
-            gap: 5px;
-        }
-
         .live-header {
             .auction-title {
                 font-size: 20px;

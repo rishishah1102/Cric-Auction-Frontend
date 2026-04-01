@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useContext, useCallback } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from 'react-router-dom';
 import "../style/auction.css";
 import { motion, AnimatePresence } from "framer-motion";
+import workspaceContext from "../context/workspaceContext";
 import auctionContext from "../context/auctionContext";
 import { instance } from "../utils/axios";
 import { toast } from "react-toastify";
-import { useLocation } from "react-router-dom";
 import axios from "axios";
 
 // Icons
@@ -21,7 +21,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import ScoreboardIcon from '@mui/icons-material/Scoreboard';
 
 // Utils
 import { Avatar } from "@mui/material";
@@ -31,15 +30,15 @@ import FileUpload from "../components/auction/FileUpload";
 function AuctionPage() {
   const navigate = useNavigate();
 
+  const { auction: selectedAuction, teams, isCreator: isEditor, refreshAuction, refreshTeams } = useContext(workspaceContext);
   const { userData } = useContext(auctionContext);
-  const [auctions, setAuctions] = useState([]);
-  const [selectedAuction, setSelectedAuction] = useState(null);
-  const [teams, setTeams] = useState([]);
-  const [isEditor, setIsEditor] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const userEmail = userData?.email;
+
+  const [loading, setLoading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [teamModalOpen, setTeamModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
+  const [ownerEditMode, setOwnerEditMode] = useState(false); // true = team owner editing their own team (limited)
 
   // Edit modal states
   const [editData, setEditData] = useState({
@@ -63,100 +62,16 @@ function AuctionPage() {
   const [ownerSearch, setOwnerSearch] = useState("");
   const [showOwnerDropdown, setShowOwnerDropdown] = useState(false);
 
-  const location = useLocation();
-  const { auctionId } = location.state || {};
-
   useEffect(() => {
-    document.title = "Auction";
     document.body.classList.add("scroll-enabled");
     return () => {
       document.body.classList.remove("scroll-enabled");
     };
   }, []);
 
-  const handleAuctionSelect = useCallback(
-    async (auctionId) => {
-      if (!auctionId) {
-        setSelectedAuction(null);
-        setIsEditor(false);
-        setTeams([]);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const response = await instance.post(
-          "/auction/get",
-          { auction_id: auctionId },
-          { headers: { Authorization: localStorage.getItem("auction") } }
-        );
-        if (response.status === 200) {
-          let selected = response.data.auction;
-          setSelectedAuction(selected);
-
-          setIsEditor(selected.created_by === userData?.email);
-          await fetchTeams(selected.id);
-        }
-      } catch (error) {
-        if (error.response?.status === 400 || error.response?.status === 404) {
-          toast.error("Invalid Auction Id");
-        } else if (error.response?.status === 401) {
-          toast.error("Please login again!");
-        } else {
-          toast.error("Please try again later!");
-        }
-      } finally {
-        setLoading(false);
-      }
-    },
-    [userData?.email]
-  );
-
-  const fetchAuctions = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await instance.get("/auction/all", {
-        headers: { Authorization: localStorage.getItem("auction") },
-      });
-      if (response.status === 200) {
-        const respAuctions = response.data.auctions || [];
-        setAuctions(respAuctions);
-        if (auctionId) {
-          await handleAuctionSelect(auctionId);
-        }
-      }
-    } catch (error) {
-      if (error.response?.status === 401) {
-        toast.error("Please login again!");
-      } else {
-        toast.error("Failed to load auctions!");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [auctionId, handleAuctionSelect]);
-
-  const fetchTeams = async (auctionId) => {
-    try {
-      const response = await instance.post(
-        "/auction/team/all",
-        { auction_id: auctionId },
-        { headers: { Authorization: localStorage.getItem("auction") } }
-      );
-      if (response.status === 200) {
-        const fetchedTeams = response.data.teams || [];
-        setTeams(fetchedTeams);
-      }
-    } catch (error) {
-      if (error.response?.status === 400 || error.response?.status === 404) {
-        toast.error("Invalid Auction Id");
-      } else if (error.response?.status === 401) {
-        toast.error("Please login again!");
-      } else {
-        toast.error("Failed to fetch teams!");
-      }
-    }
-  };
+  useEffect(() => {
+    document.title = selectedAuction ? selectedAuction.auction_name : "Auction";
+  }, [selectedAuction]);
 
   const fetchPlayers = async (auctionId) => {
     try {
@@ -185,12 +100,6 @@ function AuctionPage() {
       fetchPlayers(selectedAuction.id);
     }
   }, [selectedAuction]);
-
-  useEffect(() => {
-    if (userData) {
-      fetchAuctions();
-    }
-  }, [fetchAuctions, userData]);
 
   const copyAuctionId = () => {
     if (selectedAuction?.id) {
@@ -309,13 +218,9 @@ function AuctionPage() {
 
       if (response.status === 200) {
         toast.success("Auction updated successfully!");
-        const updatedAuction = { ...selectedAuction, ...updateData };
-        setSelectedAuction(updatedAuction);
-        setAuctions((prev) =>
-          prev.map((a) => (a.id === selectedAuction.id ? updatedAuction : a))
-        );
+        await refreshAuction();
         setEditModalOpen(false);
-        setUploadedPlayers(null);
+        setUploadedPlayers([]);
       }
     } catch (error) {
       toast.error("Failed to update auction!");
@@ -324,8 +229,15 @@ function AuctionPage() {
     }
   };
 
-  const openTeamModal = (team = null) => {
+  // Check if user owns a specific team
+  const isTeamOwner = (team) => {
+    return team.team_owners && team.team_owners.includes(userEmail);
+  };
+
+  const openTeamModal = (team = null, limitedMode = false) => {
     if (!selectedAuction) return;
+
+    setOwnerEditMode(limitedMode);
 
     if (team) {
       setEditingTeam(team);
@@ -380,7 +292,7 @@ function AuctionPage() {
 
         if (response.status === 200) {
           toast.success("Team updated successfully!");
-          await fetchTeams(selectedAuction.id);
+          await refreshTeams();
         }
       } else {
         const response = await instance.post("/auction/team", teamPayload, {
@@ -389,7 +301,7 @@ function AuctionPage() {
 
         if (response.status === 201) {
           toast.success("Team created successfully!");
-          await fetchTeams(selectedAuction.id);
+          await refreshTeams();
         }
       }
 
@@ -406,7 +318,7 @@ function AuctionPage() {
   const handleDeleteTeam = async (teamId) => {
     if (!selectedAuction) return;
 
-    if (window.confirm("Are you sure you want to delete this team?")) {
+    if (window.confirm("Are you sure you want to delete this team? This cannot be undone.")) {
       try {
         setLoading(true);
         const response = await instance.delete("/auction/team", {
@@ -416,7 +328,7 @@ function AuctionPage() {
 
         if (response.status === 200) {
           toast.success("Team deleted successfully!");
-          await fetchTeams(selectedAuction.id);
+          await refreshTeams();
         }
       } catch (error) {
         toast.error("Failed to delete team!");
@@ -471,7 +383,7 @@ function AuctionPage() {
     }
   };
 
-  if (loading && auctions.length === 0) {
+  if (loading) {
     return (
       <div className="auction-container">
         <div className="loading-state">
@@ -494,10 +406,8 @@ function AuctionPage() {
   const handleFileUpload = async (file) => {
     try {
       const jsonData = await parseExcel(file);
-      console.log("JSON Data:", jsonData);
       setUploadedPlayers(jsonData);
     } catch (error) {
-      console.error("Error parsing Excel file:", error);
     }
   };
 
@@ -509,31 +419,7 @@ function AuctionPage() {
       exit="exit"
       className="auction-container"
     >
-      {/* Auction Selection */}
-      <div className="auction-selection-section">
-        <div className="auction-dropdown-wrapper">
-          <select
-            value={selectedAuction?.id || ""}
-            onChange={(e) => handleAuctionSelect(e.target.value)}
-            className="auction-dropdown"
-          >
-            <option value="">Select an Auction</option>
-            {auctions.map((auction) => (
-              <option key={auction.id} value={auction.id}>
-                {auction.auction_name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {auctions.length === 0 ? (
-        <div className="empty-state">
-          <GavelIcon className="empty-icon" />
-          <h3>No Auctions Found</h3>
-          <p>You haven't created or joined any auctions yet.</p>
-        </div>
-      ) : selectedAuction ? (
+      {selectedAuction ? (
         <div className="auction-details-container">
           {/* Auction Details Section */}
           <motion.div
@@ -565,22 +451,13 @@ function AuctionPage() {
 
               {isEditor && (
                 <>
-                  <button className="edit-auction-button" onClick={() => {
-                    navigate('/auction/live', { state: { auctionId: selectedAuction.id, auctionName: selectedAuction.auction_name } });
-                  }}>
+                  <button className="edit-auction-button" onClick={() => navigate('live')}>
                     <PlayArrowIcon />
                   </button>
                   <button className="edit-auction-button" onClick={openEditModal}>
                     <BorderColorIcon />
                   </button>
                 </>
-              )}
-              {selectedAuction.is_ipl_auction && (
-                <button className="edit-auction-button" onClick={() => {
-                  navigate('/pointsTable', { state: { auctionId: selectedAuction.id, is_ipl_auction: selectedAuction.is_ipl_auction } })
-                }}>
-                  <ScoreboardIcon />
-                </button>
               )}
             </div>
 
@@ -705,24 +582,41 @@ function AuctionPage() {
                               )}
                             </div>
                           </div>
+                          <div className="team-card-stats">
+                            <span className="team-stat">
+                              {team.squad?.length || 0} players
+                            </span>
+                          </div>
                         </div>
 
-                        {isEditor && (
+                        {(isEditor || isTeamOwner(team)) && (
                           <div className="team-actions">
-                            <button
-                              className="team-edit-button"
-                              onClick={() => openTeamModal(team)}
-                              title="Edit team"
-                            >
-                              <EditIcon />
-                            </button>
-                            <button
-                              className="team-delete-button"
-                              onClick={() => handleDeleteTeam(team.id)}
-                              title="Delete team"
-                            >
-                              <DeleteIcon />
-                            </button>
+                            {isEditor ? (
+                              <>
+                                <button
+                                  className="team-edit-button"
+                                  onClick={() => openTeamModal(team)}
+                                  title="Edit team"
+                                >
+                                  <EditIcon />
+                                </button>
+                                <button
+                                  className="team-delete-button"
+                                  onClick={() => handleDeleteTeam(team.id)}
+                                  title="Delete team"
+                                >
+                                  <DeleteIcon />
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                className="team-edit-button"
+                                onClick={() => openTeamModal(team, true)}
+                                title="Edit your team"
+                              >
+                                <EditIcon />
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -733,13 +627,7 @@ function AuctionPage() {
             )}
           </motion.div>
         </div>
-      ) : (
-        <div className="empty-state">
-          <GavelIcon className="empty-icon" />
-          <h3>Select an Auction</h3>
-          <p>Choose an auction from the dropdown to view its details.</p>
-        </div>
-      )}
+      ) : null}
 
       {/* Edit Auction Modal */}
       <AnimatePresence>
@@ -923,7 +811,7 @@ function AuctionPage() {
                 <CloseIcon />
               </button>
 
-              <h2>{editingTeam ? "Edit Team" : "Add New Team"}</h2>
+              <h2>{ownerEditMode ? "Edit Your Team" : editingTeam ? "Edit Team" : "Add New Team"}</h2>
 
               <div className="team-form">
                 <div className="form-group">
@@ -995,6 +883,7 @@ function AuctionPage() {
                   />
                 </div>
 
+                {!ownerEditMode && (
                 <div className="form-group">
                   <label>Team Owners</label>
 
@@ -1070,6 +959,7 @@ function AuctionPage() {
                     )}
                   </div>
                 </div>
+                )}
 
                 <div className="modal-actions">
                   <button

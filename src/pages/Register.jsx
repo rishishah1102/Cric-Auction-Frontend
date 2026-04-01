@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "../style/auth.css";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import SportsCricketIcon from "@mui/icons-material/SportsCricket";
 import * as yup from "yup";
 
 // Custom Components
@@ -74,14 +75,7 @@ const Register = () => {
         abortEarly: false,
       });
 
-      console.log("emailValidation:", emailValidation);
-      console.log("mobileValidation:", mobileValidation);
-      console.log("firstNameValidation:", firstNameValidation);
-      console.log("lastNameValidation:", lastNameValidation);
-
       if (emailValidation && mobileValidation && firstNameValidation && lastNameValidation) {
-        console.log("validation success");
-        
         const requestData = {
           email: formData.email,
           mobile: formData.mobile,
@@ -146,6 +140,7 @@ const Register = () => {
         setShowOtpField(false);
         setFormData({ email: "", mobile: "" });
         localStorage.setItem("auction", res.data.token);
+        window.dispatchEvent(new Event("auth-change"));
         navigate("/profile");
       }
     } catch (error) {
@@ -167,6 +162,10 @@ const Register = () => {
           className="auth-motion-container"
         >
           <div className="auth-card">
+            <div className="auth-brand">
+              <SportsCricketIcon sx={{ fontSize: 36, color: "#3b82f6" }} />
+              <h1 className="auth-brand-title">Cricket Auction</h1>
+            </div>
             <h2>Register</h2>
             <hr className="auth-divider" />
 

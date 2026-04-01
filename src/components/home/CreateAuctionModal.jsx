@@ -55,7 +55,6 @@ const CreateAuctionModal = ({ isOpen, onClose, onCreateAuction }) => {
       );
       setAuctionImage(response.data.url);
     } catch (error) {
-      console.error("Failed to upload image:", error);
       setError('Failed to upload image. Please try again.');
     } finally {
       setLoading(false);
@@ -89,9 +88,28 @@ const CreateAuctionModal = ({ isOpen, onClose, onCreateAuction }) => {
   };
 
   const handleSubmit = () => {
+    setError("");
+
+    // Validate name
+    if (!auctionName || auctionName.trim().length < 3) {
+      setError("Auction name must be at least 3 characters");
+      return;
+    }
+
+    // Validate date is in the future
+    if (auctionDate) {
+      const selectedDate = new Date(auctionDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        setError("Auction date must be in the future");
+        return;
+      }
+    }
+
     const regex = /^\d{4}-\d{2}-\d{2}$/;
     let auction_date;
-    
+
     if (regex.test(auctionDate)) {
       auction_date = new Date(auctionDate).toISOString()
     }

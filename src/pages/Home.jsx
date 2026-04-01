@@ -245,19 +245,19 @@ function Home() {
         <div className="desktop-nav">
           <div className="tab-buttons">
             <TabButton
-              label="All Auctions"
+              label={activeTab === "all" ? `All Auctions (${currentFilteredAuctions.length})` : "All Auctions"}
               isActive={activeTab === "all"}
               onClick={() => handleTabClick("all")}
             />
             <div className="horizontalBar">|</div>
             <TabButton
-              label="Created Auctions"
+              label={activeTab === "created" ? `Created Auctions (${currentFilteredAuctions.length})` : "Created Auctions"}
               isActive={activeTab === "created"}
               onClick={() => handleTabClick("created")}
             />
             <div className="horizontalBar">|</div>
             <TabButton
-              label="Joined Auctions"
+              label={activeTab === "joined" ? `Joined Auctions (${currentFilteredAuctions.length})` : "Joined Auctions"}
               isActive={activeTab === "joined"}
               onClick={() => handleTabClick("joined")}
             />
@@ -268,10 +268,10 @@ function Home() {
         <div className="mobile-nav">
           <div className="active-tab-indicator">
             {activeTab === "all"
-              ? "All Auctions"
+              ? `All Auctions (${currentFilteredAuctions.length})`
               : activeTab === "created"
-              ? "Created Auctions"
-              : "Joined Auctions"}
+              ? `Created Auctions (${currentFilteredAuctions.length})`
+              : `Joined Auctions (${currentFilteredAuctions.length})`}
           </div>
           <button
             className="filter-button"
@@ -293,17 +293,17 @@ function Home() {
               exit="exit"
             >
               <TabButton
-                label="All Auctions"
+                label={activeTab === "all" ? `All Auctions (${currentFilteredAuctions.length})` : "All Auctions"}
                 isActive={activeTab === "all"}
                 onClick={() => handleTabClick("all")}
               />
               <TabButton
-                label="Created Auctions"
+                label={activeTab === "created" ? `Created Auctions (${currentFilteredAuctions.length})` : "Created Auctions"}
                 isActive={activeTab === "created"}
                 onClick={() => handleTabClick("created")}
               />
               <TabButton
-                label="Joined Auctions"
+                label={activeTab === "joined" ? `Joined Auctions (${currentFilteredAuctions.length})` : "Joined Auctions"}
                 isActive={activeTab === "joined"}
                 onClick={() => handleTabClick("joined")}
               />

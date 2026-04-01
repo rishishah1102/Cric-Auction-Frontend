@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useContext, useCallback } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import "../style/players.css";
 import { motion, AnimatePresence } from "framer-motion";
-import auctionContext from "../context/auctionContext";
+import workspaceContext from "../context/workspaceContext";
 import { instance } from "../utils/axios";
 import { toast } from "react-toastify";
 
@@ -22,15 +22,13 @@ import { BiSolidCricketBall } from "react-icons/bi";
 import { GiWinterGloves } from "react-icons/gi";
 
 function Players() {
-  const { userData } = useContext(auctionContext);
-  const [auctions, setAuctions] = useState([]);
+  const { auction: wsAuction, isCreator: wsIsCreator } = useContext(workspaceContext);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(15);
-  const [selectedAuction, setSelectedAuction] = useState(null);
   const [players, setPlayers] = useState([]);
   const [teams, setTeams] = useState([])
   const [filteredPlayers, setFilteredPlayers] = useState([]);
-  const [isAuctioneer, setIsAuctioneer] = useState(false);
+  const isAuctioneer = wsIsCreator;
   const [loading, setLoading] = useState(true);
 
   // Filter states
@@ -38,6 +36,7 @@ function Players() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [hammerFilter, setHammerFilter] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [sortBy, setSortBy] = useState("name");
 
   // Modal states
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -45,28 +44,12 @@ function Players() {
   const [editData, setEditData] = useState(null);
 
   useEffect(() => {
-    document.title = "Players";
     document.body.classList.add("scroll-enabled");
-    return () => {
-      document.body.classList.remove("scroll-enabled");
-    };
+    return () => { document.body.classList.remove("scroll-enabled"); };
   }, []);
-
-  const fetchAuctions = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await instance.get("/auction/all", {
-        headers: { Authorization: localStorage.getItem("auction") },
-      });
-      if (response.status === 200) {
-        setAuctions(response.data.auctions || []);
-      }
-    } catch (error) {
-      toast.error("Failed to load auctions!");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useEffect(() => {
+    document.title = wsAuction ? `Players - ${wsAuction.auction_name}` : "Players";
+  }, [wsAuction]);
 
   const fetchPlayers = async (auctionId) => {
     try {
@@ -87,41 +70,13 @@ function Players() {
     }
   };
 
-  const handleAuctionSelect = useCallback(
-    async (auctionId) => {
-      try {
-        setLoading(true);
-        const response = await instance.post(
-          "/auction/get",
-          { auction_id: auctionId },
-          { headers: { Authorization: localStorage.getItem("auction") } }
-        );
-        if (response.status === 200) {
-          let selected = response.data.auction;
-          setSelectedAuction(selected);
-          setIsAuctioneer(selected.created_by === userData.email);
-          await fetchPlayers(selected.id);
-        }
-      } catch (error) {
-        if (error.response?.status === 400 || error.response?.status === 404) {
-          toast.error("Invalid Auction Id");
-        } else if (error.response?.status === 401) {
-          toast.error("Please login again!");
-        } else {
-          toast.error("Please try again later!");
-        }
-      } finally {
-        setLoading(false);
-      }
-    },
-    [userData?.email]
-  );
-
   useEffect(() => {
-    if (userData) {
-      fetchAuctions();
+    if (wsAuction?.id) {
+      fetchPlayers(wsAuction.id);
+    } else {
+      setLoading(false);
     }
-  }, [fetchAuctions, userData]);
+  }, [wsAuction?.id]);
 
   // Apply filters
   useEffect(() => {
@@ -150,16 +105,28 @@ function Players() {
     setFilteredPlayers(filtered);
   }, [searchTerm, roleFilter, hammerFilter, players]);
 
+  // Sort players
+  const sortedPlayers = [...filteredPlayers].sort((a, b) => {
+    switch (sortBy) {
+      case "name": return a.player_name.localeCompare(b.player_name);
+      case "name-desc": return b.player_name.localeCompare(a.player_name);
+      case "price-high": return (b.selling_price || b.base_price || 0) - (a.selling_price || a.base_price || 0);
+      case "price-low": return (a.selling_price || a.base_price || 0) - (b.selling_price || b.base_price || 0);
+      case "fantasy": return (b.prev_fantasy_points || 0) - (a.prev_fantasy_points || 0);
+      default: return 0;
+    }
+  });
+
   // Pagination logic
-  const totalPages = Math.ceil(filteredPlayers.length / pageSize);
+  const totalPages = Math.ceil(sortedPlayers.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedPlayers = filteredPlayers.slice(startIndex, endIndex);
+  const paginatedPlayers = sortedPlayers.slice(startIndex, endIndex);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, roleFilter, hammerFilter, selectedAuction]);
+  }, [searchTerm, roleFilter, hammerFilter, wsAuction]);
 
   const getRoleIcon = (role) => {
     switch (role?.toLowerCase()) {
@@ -186,13 +153,11 @@ function Players() {
     try {
       const response = await instance.post(
         "/auction/team/all",
-        { auction_id: selectedAuction.id },
+        { auction_id: wsAuction.id },
         { headers: { Authorization: localStorage.getItem("auction") } }
       );
       if (response.status === 200) {
         const fetchedTeams = response.data.teams || [];
-        console.log(fetchedTeams);
-
         setTeams(fetchedTeams);
       }
     } catch (error) {
@@ -207,12 +172,10 @@ function Players() {
   };
 
   const handleEditSubmit = async () => {
-    console.log(editData.current_team);
-    
     const team = teams.find(
       (team) => team.team_name === editData.current_team
     );
-    
+
     const current_team_id = team?.id;
 
     try {
@@ -223,7 +186,7 @@ function Players() {
 
       if (response.status === 200) {
         toast.success("Player updated successfully!");
-        await fetchPlayers(selectedAuction.id);
+        await fetchPlayers(wsAuction.id);
         setEditModalOpen(false);
         setSelectedPlayer(null);
       }
@@ -245,7 +208,7 @@ function Players() {
 
         if (response.status === 200) {
           toast.success("Player deleted successfully!");
-          await fetchPlayers(selectedAuction.id);
+          await fetchPlayers(wsAuction.id);
           setSelectedPlayer(null);
         }
       } catch (error) {
@@ -256,7 +219,7 @@ function Players() {
     }
   };
 
-  if (loading && !selectedAuction) {
+  if (loading && !wsAuction) {
     return (
       <div className="player-container">
         <div className="loading-state">
@@ -264,7 +227,7 @@ function Players() {
             <GavelIcon className="hammer-icon" />
             <div className="impact" />
           </div>
-          <p>Loading auctions...</p>
+          <p>Loading...</p>
         </div>
       </div>
     );
@@ -309,7 +272,7 @@ function Players() {
             Page {currentPage} of {totalPages}
           </span>
           <span className="item-count">
-            ({filteredPlayers.length} player{filteredPlayers.length !== 1 ? 's' : ''})
+            ({sortedPlayers.length} player{sortedPlayers.length !== 1 ? 's' : ''})
           </span>
         </div>
 
@@ -333,25 +296,7 @@ function Players() {
       exit="exit"
       className="player-container"
     >
-      {/* Auction Selection */}
-      <div className="player-selection-section">
-        <div className="player-dropdown-wrapper">
-          <select
-            value={selectedAuction?.id || ""}
-            onChange={(e) => handleAuctionSelect(e.target.value)}
-            className="player-dropdown"
-          >
-            <option value="">Select an Auction</option>
-            {auctions.map((auction) => (
-              <option key={auction.id} value={auction.id}>
-                {auction.auction_name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {selectedAuction ? (
+      {wsAuction ? (
         <div className="player-content">
           {/* Filters Section */}
           <motion.div
@@ -393,6 +338,14 @@ function Players() {
                   <option value="upcoming">Upcoming</option>
                   <option value="sold">Sold</option>
                   <option value="unsold">Unsold</option>
+                </select>
+
+                <select className="players-sort-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                  <option value="name">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="price-high">Price (High→Low)</option>
+                  <option value="price-low">Price (Low→High)</option>
+                  <option value="fantasy">Fantasy Points</option>
                 </select>
               </div>
             </div>
@@ -446,6 +399,14 @@ function Players() {
                     <option value="sold">Sold</option>
                     <option value="unsold">Unsold</option>
                   </select>
+
+                  <select className="players-sort-select" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                    <option value="name">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="price-high">Price (High→Low)</option>
+                    <option value="price-low">Price (Low→High)</option>
+                    <option value="fantasy">Fantasy Points</option>
+                  </select>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -466,7 +427,7 @@ function Players() {
                 </div>
                 <p>Loading players...</p>
               </div>
-            ) : filteredPlayers.length === 0 ? (
+            ) : sortedPlayers.length === 0 ? (
               <div className="no-players-state">
                 <SportsIcon className="no-players-icon" />
                 <p>No players found</p>
@@ -496,7 +457,7 @@ function Players() {
                           <div className="role-icon">
                             {getRoleIcon(player.role)}
                           </div>
-                          {selectedAuction.is_ipl_auction &&
+                          {wsAuction.is_ipl_auction &&
                             player.country &&
                             player.country !== "India" && (
                               <FlightIcon className="overseas-icon" />
@@ -523,7 +484,7 @@ function Players() {
                               : "N/A"}
                           </span>
                         </div>
-                        {selectedAuction.is_ipl_auction && (
+                        {wsAuction.is_ipl_auction && (
                           <>
                             <div className="info-row">
                               <span className="info-label">Country:</span>
@@ -550,7 +511,7 @@ function Players() {
               </div>
             )}
 
-            {!loading && filteredPlayers.length > 0 && (
+            {!loading && sortedPlayers.length > 0 && (
               <PaginationControls />
             )}
           </motion.div>
@@ -558,8 +519,8 @@ function Players() {
       ) : (
         <div className="empty-state">
           <GavelIcon className="empty-icon" />
-          <h3>Select an Auction</h3>
-          <p>Choose an auction from the dropdown to view its players.</p>
+          <h3>No Auction Selected</h3>
+          <p>Please select a workspace with an auction to view its players.</p>
         </div>
       )}
 
@@ -604,7 +565,7 @@ function Players() {
                     <span className="detail-label">Role:</span>
                     <span className="detail-value">{selectedPlayer.role}</span>
                   </div>
-                  {selectedAuction.is_ipl_auction && (
+                  {wsAuction.is_ipl_auction && (
                     <>
                       <div className="detail-row">
                         <span className="detail-label">Country:</span>
@@ -771,7 +732,7 @@ function Players() {
                   </div>
                 </div>
 
-                {selectedAuction.is_ipl_auction && (
+                {wsAuction.is_ipl_auction && (
                   <div className="form-row">
                     <div className="form-group">
                       <label>Country</label>

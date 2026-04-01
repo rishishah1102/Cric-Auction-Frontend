@@ -191,7 +191,6 @@
 }
 
 .home-container .home-section .auctions-grid .auction-card .auction-card-content .auction-name {
-  flex: 1;
   font-weight: 500;
   color: #333;
   font-size: 16px;
@@ -667,4 +666,51 @@
     width: 95%;
     padding: 20px;
   }
+}
+
+/* Auction Card Info Layout */
+.home-container .home-section .auctions-grid .auction-card .auction-card-content .auction-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Auction Card Meta Row (date + badges) */
+.home-container .home-section .auctions-grid .auction-card .auction-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Auction Card Date */
+.home-container .home-section .auctions-grid .auction-card .auction-card-date {
+  font-size: 12px;
+  color: #999;
+  line-height: 1.2;
+}
+
+/* IPL Badge */
+.home-container .home-section .auctions-grid .auction-card .ipl-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: #1a73e8;
+  padding: 1px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+}
+
+/* Auction Card Stats Row */
+.home-container .home-section .auctions-grid .auction-card .auction-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: #888;
+  line-height: 1.2;
 }

@@ -43,7 +43,10 @@ function Profile() {
   const [imageUrl, setImageUrl] = useState(defaultImgUrl);
   const [loading, setLoading] = useState(false);
 
-  const { userData } = useContext(auctionContext);
+  const { userData, userAuctions } = useContext(auctionContext);
+
+  const createdCount = (userAuctions || []).filter(a => a.created_by === userData?.email).length;
+  const joinedCount = (userAuctions || []).length;
 
   useEffect(() => {
     document.title = "Profile";
@@ -165,6 +168,17 @@ function Profile() {
                   accept="image/*"
                 />
               </label>
+            </div>
+          </div>
+
+          <div className="profile-stats">
+            <div className="profile-stat-card">
+              <span className="profile-stat-value">{joinedCount}</span>
+              <span className="profile-stat-label">Auctions</span>
+            </div>
+            <div className="profile-stat-card">
+              <span className="profile-stat-value">{createdCount}</span>
+              <span className="profile-stat-label">Created</span>
             </div>
           </div>
 

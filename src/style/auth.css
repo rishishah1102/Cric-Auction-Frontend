@@ -549,3 +549,22 @@ body {
 .auth-motion-container {
   animation: floatCard 6s ease-in-out infinite;
 }
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.auth-brand-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-color);
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+.auth-brand .MuiSvgIcon-root {
+  color: var(--accent-color) !important;
+  filter: drop-shadow(0 0 8px var(--accent-glow));
+}

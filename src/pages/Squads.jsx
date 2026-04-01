@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import auctionContext from "../context/auctionContext";
+import workspaceContext from "../context/workspaceContext";
 import { instance } from "../utils/axios";
 import { toast } from "react-toastify";
 
@@ -30,9 +31,9 @@ import { GiWinterGloves } from "react-icons/gi";
 
 function Squads() {
   const { userData } = useContext(auctionContext);
+  const { auction: wsAuction } = useContext(workspaceContext);
 
   // Main data states
-  const [auctions, setAuctions] = useState([]);
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [teams, setTeams] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
@@ -64,40 +65,22 @@ function Squads() {
   }, []);
 
   useEffect(() => {
-    document.title = "Squad";
     document.body.classList.add("scroll-enabled");
     checkWeekendStatus();
-    const timer = setInterval(checkWeekendStatus, 60000); // Check every minute
+    const timer = setInterval(checkWeekendStatus, 60000);
     return () => clearInterval(timer);
   }, [checkWeekendStatus]);
-
-  // Fetch auctions
-  const loadAuctions = useCallback(async () => {
-    if (!userData) return;
-
-    try {
-      setLoading(true);
-      const res = await instance.get("/auction/all", {
-        headers: { Authorization: localStorage.getItem("auction") },
-      });
-
-      if (res.status === 200) {
-        setAuctions(res.data.auctions || []);
-      }
-    } catch (error) {
-      if (error.response?.status === 401) {
-        toast.error("Session expired. Please login again!");
-      } else {
-        toast.error("Failed to load auctions");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [userData]);
-
   useEffect(() => {
-    loadAuctions();
-  }, [loadAuctions]);
+    document.title = selectedAuction ? `Squads - ${selectedAuction.auction_name}` : "Squads";
+  }, [selectedAuction]);
+
+  // Set selectedAuction from workspace context and load teams
+  useEffect(() => {
+    if (wsAuction) {
+      setSelectedAuction(wsAuction);
+      loadTeams(wsAuction.id);
+    }
+  }, [wsAuction]);
 
   // Fetch teams for selected auction
   const loadTeams = async (auctionId) => {
@@ -176,43 +159,6 @@ function Squads() {
     } catch (error) {
       setSavedPlaying11Ids([]);
       setNextPlaying11Ids([]);
-    }
-  };
-
-  // Handle auction selection
-  const handleSelectAuction = async (auctionId) => {
-    if (!auctionId) {
-      setSelectedAuction(null);
-      setTeams([]);
-      setSelectedTeam(null);
-      setAllSquadPlayers([]);
-      setSavedPlaying11Ids([]);
-      setNextPlaying11Ids([]);
-      setCurrentView("squad");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const res = await instance.post(
-        "/auction/get",
-        { auction_id: auctionId },
-        { headers: { Authorization: localStorage.getItem("auction") } }
-      );
-
-      if (res.status === 200) {
-        setSelectedAuction(res.data.auction);
-        await loadTeams(res.data.auction.id);
-        setSelectedTeam(null);
-        setAllSquadPlayers([]);
-        setSavedPlaying11Ids([]);
-        setNextPlaying11Ids([]);
-        setCurrentView("squad");
-      }
-    } catch (error) {
-      toast.error("Failed to load auction");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -778,17 +724,6 @@ function Squads() {
     >
       <div className="page-header">
         <div className="selectors">
-          <select
-            value={selectedAuction?.id || ""}
-            onChange={e => handleSelectAuction(e.target.value)}
-            className="selector-dropdown"
-          >
-            <option value="">Choose Auction</option>
-            {auctions.map(a => (
-              <option key={a.id} value={a.id}>{a.auction_name}</option>
-            ))}
-          </select>
-
           {selectedAuction && (
             <select
               value={selectedTeam?.id || ""}
@@ -804,13 +739,7 @@ function Squads() {
         </div>
       </div>
 
-      {!selectedAuction ? (
-        <div className="empty-content">
-          <GavelIcon className="empty-icon" />
-          <h3>Select an Auction</h3>
-          <p>Choose an auction to view squads</p>
-        </div>
-      ) : !selectedTeam ? (
+      {!selectedTeam ? (
         <div className="empty-content">
           <GroupsIcon className="empty-icon" />
           <h3>Select a Team</h3>

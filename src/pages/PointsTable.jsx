@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
-import auctionContext from "../context/auctionContext";
+import workspaceContext from "../context/workspaceContext";
 import { instance } from "../utils/axios";
 import "../style/pointstable.css";
 
@@ -10,7 +9,6 @@ import EmojiEventsIcon    from "@mui/icons-material/EmojiEvents";
 import ScoreboardIcon     from "@mui/icons-material/Scoreboard";
 import EditNoteIcon       from "@mui/icons-material/EditNote";
 import SaveIcon           from "@mui/icons-material/Save";
-import ArrowBackIcon      from "@mui/icons-material/ArrowBack";
 import SearchIcon         from "@mui/icons-material/Search";
 import SportsCricketIcon  from "@mui/icons-material/SportsCricket";
 import RefreshIcon        from "@mui/icons-material/Refresh";
@@ -122,19 +120,10 @@ function ConfirmDialog({ open, onClose, onConfirm, loading, title, body, items, 
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function PointsTable() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  if (!location.state?.is_ipl_auction) {
-    toast.error("Points table is not available for this auction");
-    navigate('/');
-  }
+  const { auction: wsAuction, isCreator } = useContext(workspaceContext);
 
-  const { userData, userAuctions } = useContext(auctionContext);
-
-  const [selectedId,     setSelectedId]     = useState(location.state?.auctionId || "");
-  const [auction,        setAuction]         = useState(null);
-  const [isCreator,      setIsCreator]       = useState(false);
-  const [auctionLoading, setAuctionLoading]  = useState(false);
+  const selectedId = wsAuction?.id || "";
+  const [auction, setAuction] = useState(null);
   const [activeTab,      setActiveTab]       = useState("leaderboard");
 
   // Enter Points
@@ -179,26 +168,16 @@ export default function PointsTable() {
 
   // ── Enable scrolling on body ─────────────────────────────────────────────
   useEffect(() => {
-    document.title = "Points Table";
     document.body.classList.add("scroll-enabled");
     return () => document.body.classList.remove("scroll-enabled");
   }, []);
+  useEffect(() => {
+    document.title = wsAuction ? `Points Table - ${wsAuction.auction_name}` : "Points Table";
+  }, [wsAuction]);
 
   // ── Fetch full auction (for created_by check) ──────────────────────────────
-  const loadAuction = useCallback(async (id) => {
-    if (!id) return;
-    setAuctionLoading(true);
-    try {
-      const res = await instance.post("/auction/get", { auction_id: id }, { headers: auth() });
-      if (res.status === 200) {
-        setAuction(res.data.auction);
-        setIsCreator(res.data.auction.created_by === userData?.email);
-      }
-    } catch { toast.error("Failed to load auction"); }
-    finally { setAuctionLoading(false); }
-  }, [userData?.email]);
-
-  useEffect(() => { if (selectedId) loadAuction(selectedId); }, [selectedId, loadAuction]);
+  // Sync auction from workspace context.
+  useEffect(() => { if (wsAuction) setAuction(wsAuction); }, [wsAuction]);
 
   // ── IPL teams ──────────────────────────────────────────────────────────────
   const fetchIPLTeams = useCallback(async () => {
@@ -437,33 +416,12 @@ export default function PointsTable() {
         warn="⚠️ This will wipe all accumulated points. Cannot be undone."
         confirmText="Yes, Reset All Points" />
 
-      {/* ── Top Bar ── */}
-      <div className="pt-topbar">
-        <button className="pt-back" onClick={() => navigate(-1)} aria-label="Back">
-          <ArrowBackIcon fontSize="small" />
-        </button>
-        <div className="pt-topbar-title">
-          <EmojiEventsIcon sx={{ color: "#f59e0b", fontSize: 22 }} />
-          <span>Points Table</span>
-        </div>
-        <select className="pt-auction-pick" value={selectedId}
-          onChange={e => {
-            setSelectedId(e.target.value);
-            setPlayersLoaded(false); setMatchPlayers([]);
-            setLeaderboard([]); setScoreboard([]);
-          }}>
-          <option value="">Choose auction…</option>
-          {(userAuctions || []).map(a => <option key={a.id} value={a.id}>{a.auction_name}</option>)}
-        </select>
-      </div>
 
       {!selectedId ? (
         <div className="pt-splash">
           <SportsCricketIcon className="pt-splash-icon" />
-          <p>Select an auction to view the points table</p>
+          <p>No auction selected</p>
         </div>
-      ) : auctionLoading ? (
-        <Spinner />
       ) : !auction?.is_ipl_auction ? (
         <div className="pt-splash">
           <EmojiEventsIcon className="pt-splash-icon" />

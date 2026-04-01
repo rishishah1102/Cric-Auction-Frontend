@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+import workspaceContext from "../context/workspaceContext";
 
 // Icons
 import GavelIcon from "@mui/icons-material/Gavel";
@@ -10,7 +11,6 @@ import SportsCricketIcon from "@mui/icons-material/SportsCricket";
 import FlightIcon from "@mui/icons-material/Flight";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import { GiCricketBat } from "react-icons/gi";
@@ -22,8 +22,9 @@ import { instance } from '../utils/axios';
 
 function BiddingRoom() {
     const navigate = useNavigate();
-    const location = useLocation();
-    const { auctionId, auctionName } = location.state || {};
+    const { auction } = useContext(workspaceContext);
+    const auctionId = auction?.id;
+    const auctionName = auction?.auction_name;
 
     const [teams, setTeams] = useState([]);
     const [currentPlayer, setCurrentPlayer] = useState(null);
@@ -49,14 +50,13 @@ function BiddingRoom() {
             }
         } catch (error) {
             toast.error("Failed to fetch teams!");
-            console.error("Error fetching teams:", error);
         } finally {
             setLoading(false);
         }
     }, [auctionId]);
 
     useEffect(() => {
-        document.title = `🔥 LIVE - ${auctionName || 'Auction'}`;
+        document.title = `LIVE - ${auctionName || 'Auction'} `;
         document.body.classList.add("scroll-enabled");
 
         if (auctionId) {
@@ -83,7 +83,6 @@ function BiddingRoom() {
             }
         } catch (error) {
             toast.error("Failed to fetch player!");
-            console.error("Error fetching player:", error);
         } finally {
             setFetchingPlayer(false);
         }
@@ -140,7 +139,6 @@ function BiddingRoom() {
             }
         } catch (error) {
             toast.error("Failed to mark player as sold!");
-            console.error("Error marking player as sold:", error);
         } finally {
             setLoading(false);
         }
@@ -168,7 +166,6 @@ function BiddingRoom() {
             }
         } catch (error) {
             toast.error("Failed to mark player as unsold!");
-            console.error("Error marking player as unsold:", error);
         } finally {
             setLoading(false);
         }
@@ -189,11 +186,6 @@ function BiddingRoom() {
         }
     };
 
-    const handleBack = () => {
-        if (window.confirm("Are you sure you want to leave the auction?")) {
-            navigate(-1);
-        }
-    };
 
     if (loading && teams.length === 0) {
         return (
@@ -247,15 +239,20 @@ function BiddingRoom() {
                 )}
             </AnimatePresence>
 
-            {/* Back Button */}
+            {/* Exit Pill */}
             <motion.button
-                className="back-button"
-                onClick={handleBack}
+                className="live-exit-pill"
+                onClick={() => {
+                    if (window.confirm("Exit live auction?")) {
+                        navigate(`/auction/${auctionId}`);
+                    }
+                }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
             >
-                <ArrowBackIcon />
-                Exit Auction
+                ← Exit
             </motion.button>
 
             {/* Live Header */}

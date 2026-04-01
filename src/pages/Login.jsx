@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import "../style/auth.css";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import SportsCricketIcon from "@mui/icons-material/SportsCricket";
 import * as yup from "yup";
 
 // Custom Components
@@ -67,8 +68,6 @@ const Login = () => {
         } 
       }
     } catch (err) {
-      console.log(err);
-      
       if (err?.response?.status === 404) {
         toast.error("User not found! Please register first");
       } else {
@@ -104,6 +103,7 @@ const Login = () => {
         setShowOtpField(false);
         setFormData({ email: "" });
         localStorage.setItem("auction", res.data.token);
+        window.dispatchEvent(new Event("auth-change"));
         navigate("/profile");
       }
     } catch (error) {
@@ -125,6 +125,10 @@ const Login = () => {
           className="auth-motion-container"
         >
           <div className="auth-card">
+            <div className="auth-brand">
+              <SportsCricketIcon sx={{ fontSize: 36, color: "#3b82f6" }} />
+              <h1 className="auth-brand-title">Cricket Auction</h1>
+            </div>
             <h2>Login</h2>
             <hr className="auth-divider" />
 
